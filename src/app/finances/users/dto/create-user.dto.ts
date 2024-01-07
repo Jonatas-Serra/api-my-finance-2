@@ -1,11 +1,30 @@
+// create-user.dto.ts
+import {
+  IsNotEmpty,
+  IsString,
+  IsEmail,
+  IsPhoneNumber,
+  IsOptional,
+} from 'class-validator'
+
 export class CreateUserDto {
-  id: string
+  @IsNotEmpty()
+  @IsString()
   name: string
+
+  @IsNotEmpty()
+  @IsEmail()
   email: string
+
+  @IsNotEmpty()
+  @IsString()
   password: string
+
+  @IsNotEmpty()
+  @IsPhoneNumber('BR', { message: 'Invalid phone number' })
   phone: string
-  photo: string
-  createdAt: Date
-  updatedAt: Date
-  isActive: boolean
+
+  @IsOptional()
+  @IsString()
+  photo?: string
 }
