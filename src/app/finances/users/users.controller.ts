@@ -1,5 +1,12 @@
 import { plainToClass } from 'class-transformer'
-import { Body, Controller, Get, Patch, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+} from '@nestjs/common'
 import { Param } from '@nestjs/common'
 import { UsersSerializer } from './serializer/users.serializer'
 import { UsersService } from './users.service'
@@ -27,5 +34,18 @@ export class UsersController {
         excludeExtraneousValues: true,
       },
     )
+  }
+
+  @Patch(':id/update-password')
+  updatePassword(
+    @Param('id') id: string,
+    @Body() updatePasswordDto: string,
+  ) {
+    return this.usersService.updatePassword(id, updatePasswordDto)
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id)
   }
 }
