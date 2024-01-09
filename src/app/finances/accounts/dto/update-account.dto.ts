@@ -4,6 +4,7 @@ import {
   IsPositive,
   IsString,
   IsOptional,
+  IsNotEmpty,
 } from 'class-validator'
 
 export class UpdateAccountDto {
@@ -51,4 +52,8 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsString()
   status: string
+
+  @IsNotEmpty()
+  @IsNumber()
+  repeatInterval: number
 }

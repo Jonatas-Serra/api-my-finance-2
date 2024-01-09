@@ -1,10 +1,10 @@
-// accounts.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
+import AppError from 'src/shared/errors/AppError'
 
 @Injectable()
 export class AccountsService {
@@ -25,9 +25,31 @@ export class AccountsService {
     return createdAccount.save()
   }
 
+  async createRecurringAccounts(
+    createAccountDto: CreateAccountDto,
+    createdBy: string,
+  ) {
+    const { repeat, repeatInterval } = createAccountDto
+    const recurringAccounts = []
+
+    for (let i = 1; i <= repeat; i++) {
+      const newAccount = new this.accountModel({
+        ...createAccountDto,
+        createdBy,
+        dueDate: this.calculateNextDueDate(createAccountDto, i),
+      })
+
+      newAccount._id = newAccount.id
+      recurringAccounts.push(newAccount)
+    }
+
+    return this.accountModel.insertMany(recurringAccounts)
+  }
+
   async findAll(creatorId: string) {
     const allAccounts = await this.accountModel
       .find({ createdBy: creatorId })
+      .lean()
       .exec()
     const expandedAccounts = this.expandRepeatingAccounts(allAccounts)
     return expandedAccounts
@@ -36,7 +58,7 @@ export class AccountsService {
   async findOne(id: string) {
     const account = await this.accountModel.findById(id).exec()
     if (!account) {
-      throw new NotFoundException('Account not found')
+      throw new AppError('Account not found')
     }
     return account
   }
@@ -47,7 +69,7 @@ export class AccountsService {
       .exec()
 
     if (!account) {
-      throw new NotFoundException('Account not found')
+      throw new AppError('Account not found')
     }
 
     return account
@@ -58,7 +80,7 @@ export class AccountsService {
       .findByIdAndDelete(id)
       .exec()
     if (!account) {
-      throw new NotFoundException('Account not found')
+      throw new AppError('Account not found')
     }
     return account
   }
@@ -66,7 +88,7 @@ export class AccountsService {
   async pay(id: string, discount: number) {
     const account = await this.accountModel.findById(id).exec()
     if (!account) {
-      throw new NotFoundException('Account not found')
+      throw new AppError('Account not found')
     }
 
     account.isPaid = true
@@ -83,13 +105,10 @@ export class AccountsService {
       if (account.repeat) {
         const repeatCount = account.repeat || 1
         for (let i = 1; i <= repeatCount; i++) {
-          const expandedAccount: Account = JSON.parse(
-            JSON.stringify(account),
-          )
-          expandedAccount.dueDate = this.calculateNextDueDate(
-            account,
-            i,
-          )
+          const expandedAccount: Account = {
+            ...account,
+            dueDate: this.calculateNextDueDate(account, i),
+          }
           expandedAccounts.push(expandedAccount)
         }
       } else {
@@ -101,7 +120,7 @@ export class AccountsService {
   }
 
   private calculateNextDueDate(
-    account: Account,
+    account: CreateAccountDto,
     repeatIndex: number,
   ) {
     const { repeatInterval, dueDate } = account

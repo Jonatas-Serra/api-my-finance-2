@@ -4,13 +4,17 @@ import {
   Post,
   Body,
   Param,
-  Put,
   Delete,
   Patch,
 } from '@nestjs/common'
 import { AccountsService } from './accounts.service'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
+import { Account } from './entities/account.entity'
+
+interface AccountWithId extends Account {
+  _id: any
+}
 
 @Controller('accounts')
 export class AccountsController {
@@ -19,7 +23,14 @@ export class AccountsController {
   @Post()
   create(@Body() createAccountDto: CreateAccountDto) {
     const createdBy = createAccountDto.createdBy
-    return this.accountsService.create(createAccountDto, createdBy)
+    if (createAccountDto.repeat) {
+      return this.accountsService.createRecurringAccounts(
+        createAccountDto,
+        createdBy,
+      )
+    } else {
+      return this.accountsService.create(createAccountDto, createdBy)
+    }
   }
 
   @Get(':id')
@@ -29,28 +40,16 @@ export class AccountsController {
 
   @Get('user/:creatorId')
   async findAll(@Param('creatorId') creatorId: string) {
-    const accounts = this.accountsService.findAll(creatorId)
+    const accounts = await this.accountsService.findAll(creatorId)
 
-    const simplifiedAccounts = (await accounts).map((account) => ({
-      id: account._id,
-      type: account.type,
-      value: account.value,
-      dueDate: account.dueDate,
-      issueDate: account.issueDate,
-      documentNumber: account.documentNumber,
-      category: account.category,
-      documentType: account.documentType,
-      description: account.description,
-      payeeOrPayer: account.payeeOrPayer,
-      repeat: account.repeat,
-      repeatInterval: account.repeatInterval,
-      isPaid: account.isPaid,
-      status: account.status,
-      discount: account.discount,
-      createdBy: account.createdBy,
-      createdAt: account.createdAt,
-      updatedAt: account.updatedAt,
-    }))
+    const uniqueAccounts: Record<string, AccountWithId> = {}
+
+    accounts.forEach((account: AccountWithId) => {
+      const { _id, ...rest } = account
+      uniqueAccounts[_id] = { _id, ...rest }
+    })
+
+    const simplifiedAccounts = Object.values(uniqueAccounts)
 
     return simplifiedAccounts
   }

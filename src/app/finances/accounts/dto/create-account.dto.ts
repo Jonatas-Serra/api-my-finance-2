@@ -5,6 +5,7 @@ import {
   IsPositive,
   IsString,
   IsOptional,
+  IsDate,
 } from 'class-validator'
 
 export class CreateAccountDto {
@@ -18,11 +19,11 @@ export class CreateAccountDto {
   value: number
 
   @IsNotEmpty()
-  @IsString()
+  @IsDate()
   dueDate: Date
 
   @IsNotEmpty()
-  @IsString()
+  @IsDate()
   issueDate: Date
 
   @IsOptional()
@@ -52,4 +53,8 @@ export class CreateAccountDto {
   @IsNotEmpty()
   @IsString()
   createdBy: string
+
+  @IsNotEmpty()
+  @IsNumber()
+  repeatInterval: number
 }
