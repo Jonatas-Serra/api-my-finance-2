@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
-import AppError from 'src/shared/errors/AppError'
+import AppError from '../../../shared/errors/AppError'
 
 @Injectable()
 export class AccountsService {

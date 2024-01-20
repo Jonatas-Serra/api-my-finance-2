@@ -13,7 +13,7 @@ import { IsPublic } from './decorators/is-public.decorator'
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(AuthGuard('user'))
   @Post('login')
   async login(@Req() req: any) {
     const user = req.user

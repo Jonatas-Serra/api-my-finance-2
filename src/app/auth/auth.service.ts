@@ -1,7 +1,7 @@
 import { User } from '../../app/finances/users/entities/user.entity'
 import { Injectable } from '@nestjs/common'
 import { UsersService } from '../../app/finances/users/users.service'
-import { compareSync } from 'bcrypt'
+import * as bcrypt from 'bcrypt'
 import { JwtService } from '@nestjs/jwt'
 import AppError from 'src/shared/errors/AppError'
 
@@ -34,11 +34,14 @@ export class AuthService {
       return null
     }
 
-    const isPasswordValid = compareSync(password, user.password)
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password,
+    )
+
     if (!isPasswordValid) {
       return null
     }
-
     return user
   }
 

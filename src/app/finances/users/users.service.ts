@@ -9,7 +9,6 @@ import AppError from 'src/shared/errors/AppError'
 
 @Injectable()
 export class UsersService {
-  authService: any
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
@@ -17,7 +16,6 @@ export class UsersService {
   async hashPassword(password: string): Promise<string> {
     const salt = bcrypt.genSaltSync(10)
     const hash = bcrypt.hashSync(password.toString(), salt)
-
     return hash
   }
 
@@ -80,11 +78,24 @@ export class UsersService {
     return this.userModel.updateOne({ _id: id }, user).exec()
   }
 
-  async updatePassword(userId: string, newPassword: string) {
+  async updatePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ) {
     const user = await this.userModel.findById(userId).exec()
 
     if (!user) {
       throw new AppError('User not found')
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      oldPassword,
+      user.password,
+    )
+
+    if (!isPasswordValid) {
+      throw new AppError('Invalid old password')
     }
 
     user.password = await this.hashPassword(newPassword)

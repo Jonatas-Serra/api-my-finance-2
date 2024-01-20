@@ -19,7 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  providers: [AuthService, LocalStrategy, UserStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, UserStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
