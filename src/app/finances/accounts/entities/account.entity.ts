@@ -60,6 +60,9 @@ export class Account {
 
   @Prop()
   updatedAt: Date
+
+  @Prop()
+  walletId: string
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account)

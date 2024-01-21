@@ -5,12 +5,14 @@ import { Model } from 'mongoose'
 import { Wallet, WalletDocument } from './entities/wallet.entity'
 import { CreateWalletDto } from './dto/create-wallet.dto'
 import { UpdateWalletDto } from './dto/update-wallet.dto'
+import { TransactionService } from '../transactions/transactions.service'
 
 @Injectable()
 export class WalletService {
   constructor(
     @InjectModel(Wallet.name)
     private walletModel: Model<WalletDocument>,
+    private transactionService: TransactionService,
   ) {}
 
   async create(createWalletDto: CreateWalletDto, createdBy: string) {
@@ -55,6 +57,13 @@ export class WalletService {
     if (!wallet) {
       throw new AppError('Wallet not found')
     }
+
+    await this.transactionService.removeByWalletId(id)
+
     return wallet
+  }
+
+  async removeByUserId(userId: string) {
+    await this.walletModel.deleteMany({ createdBy: userId }).exec()
   }
 }

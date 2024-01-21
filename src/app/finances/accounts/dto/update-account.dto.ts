@@ -8,9 +8,13 @@ import {
 } from 'class-validator'
 
 export class UpdateAccountDto {
-  @IsOptional()
+  @IsNotEmpty()
   @IsEnum(['receivable', 'payable'])
   type: string
+
+  @IsNotEmpty()
+  @IsString()
+  walletId: string
 
   @IsOptional()
   @IsNumber()

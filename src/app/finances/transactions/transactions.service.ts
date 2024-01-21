@@ -10,6 +10,7 @@ import {
   WalletDocument,
 } from '../wallets/entities/wallet.entity'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
+import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import AppError from 'src/shared/errors/AppError'
 
 @Injectable()
@@ -32,7 +33,79 @@ export class TransactionService {
       savedTransaction._id,
     )
 
+    await this.updateWalletBalance(createTransactionDto.walletId)
+
     return savedTransaction
+  }
+
+  async findAllByWalletId(walletId: string) {
+    return this.transactionModel.find({ walletId }).lean().exec()
+  }
+
+  async findOne(id: string) {
+    const transaction = await this.transactionModel
+      .findById(id)
+      .exec()
+    if (!transaction) {
+      throw new AppError('Transaction not found')
+    }
+    return transaction
+  }
+
+  async update(
+    id: string,
+    updateTransactionDto: UpdateTransactionDto,
+  ) {
+    const transaction = await this.transactionModel
+      .findByIdAndUpdate(id, updateTransactionDto, { new: true })
+      .exec()
+
+    if (!transaction) {
+      throw new AppError('Transaction not found')
+    }
+
+    await this.updateWalletBalance(transaction.walletId)
+
+    return transaction
+  }
+
+  async remove(id: string) {
+    const transaction = await this.transactionModel
+      .findByIdAndDelete(id)
+      .exec()
+
+    if (!transaction) {
+      throw new AppError('Transaction not found')
+    }
+
+    await this.updateWalletBalance(transaction.walletId)
+
+    return transaction
+  }
+
+  async removeByWalletId(walletId: string) {
+    await this.transactionModel.deleteMany({ walletId }).exec()
+  }
+
+  async removeByAccountId(accountId: string) {
+    const transactions = await this.transactionModel
+      .find({ accountId })
+      .exec()
+
+    if (transactions.length > 0) {
+      await this.transactionModel.deleteMany({ accountId }).exec()
+    }
+  }
+
+  async removeByUserId(userId: string) {
+    const wallets = await this.walletModel
+      .find({ createdBy: userId })
+      .exec()
+    const walletIds = wallets.map((wallet) => wallet._id)
+
+    await this.transactionModel
+      .deleteMany({ walletId: { $in: walletIds } })
+      .exec()
   }
 
   private async updateWalletTransactions(
@@ -52,5 +125,28 @@ export class TransactionService {
 
   async findAll(creatorId: string) {
     return this.transactionModel.find({ createdBy: creatorId }).exec()
+  }
+
+  private async updateWalletBalance(walletId: string) {
+    const wallet = await this.walletModel.findById(walletId).exec()
+    if (!wallet) {
+      throw new AppError('Wallet not found')
+    }
+
+    const transactions = await this.transactionModel
+      .find({ walletId })
+      .exec()
+
+    const balance = transactions.reduce((total, transaction) => {
+      if (transaction.type === 'Deposit') {
+        return total + transaction.amount
+      } else if (transaction.type === 'Withdrawal') {
+        return total - transaction.amount
+      }
+      return total
+    }, 0)
+
+    wallet.balance = balance
+    await wallet.save()
   }
 }

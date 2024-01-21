@@ -57,4 +57,8 @@ export class CreateAccountDto {
   @IsNotEmpty()
   @IsNumber()
   repeatInterval: number
+
+  @IsNotEmpty()
+  @IsString()
+  walletId: string
 }

@@ -6,11 +6,17 @@ import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import * as bcrypt from 'bcrypt'
 import AppError from 'src/shared/errors/AppError'
+import { WalletService } from '../wallets/wallet.service'
+import { TransactionService } from '../transactions/transactions.service'
+import { AccountsService } from '../accounts/accounts.service'
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private walletService: WalletService,
+    private transactionService: TransactionService,
+    private accountsService: AccountsService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -23,13 +29,27 @@ export class UsersService {
     const checkUser = await this.userModel.findOne({
       email: createUserDto.email,
     })
+
     if (checkUser) {
       throw new AppError('User already exists')
     }
+
     createUserDto.password = await this.hashPassword(
       createUserDto.password,
     )
+
     const createdUser = await new this.userModel(createUserDto).save()
+
+    await this.walletService.create(
+      {
+        name: 'Carteira',
+        balance: 0,
+        currency: 'BRL',
+        createdBy: createdUser._id,
+      },
+      createdUser._id,
+    )
+
     return createdUser
   }
 
@@ -102,7 +122,19 @@ export class UsersService {
     return user.save()
   }
 
-  remove(id: string) {
+  async remove(id: string) {
+    const user = await this.findOneById(id)
+
+    if (!user) {
+      throw new AppError('User not found')
+    }
+
+    await this.accountsService.removeByUserId(id)
+
+    await this.transactionService.removeByUserId(id)
+
+    await this.walletService.removeByUserId(id)
+
     return this.userModel.findByIdAndDelete(id).exec()
   }
 }

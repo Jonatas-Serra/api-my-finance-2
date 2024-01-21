@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import { TransactionService } from '../transactions/transactions.service'
 import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
@@ -11,6 +12,7 @@ export class AccountsService {
   constructor(
     @InjectModel(Account.name)
     private accountModel: Model<AccountDocument>,
+    private transactionService: TransactionService,
   ) {}
 
   async create(
@@ -79,10 +81,30 @@ export class AccountsService {
     const account = await this.accountModel
       .findByIdAndDelete(id)
       .exec()
+
     if (!account) {
       throw new AppError('Account not found')
     }
+
+    if (account.status === 'Paid') {
+      await this.transactionService.removeByAccountId(account._id)
+    }
+
     return account
+  }
+
+  async removeByUserId(userId: string) {
+    const accounts = await this.accountModel
+      .find({ createdBy: userId })
+      .exec()
+
+    for (const account of accounts) {
+      if (account.isPaid && account.transactionId) {
+        await this.transactionService.remove(account.transactionId)
+      }
+
+      await this.accountModel.findByIdAndDelete(account._id).exec()
+    }
   }
 
   async pay(id: string, discount: number) {
@@ -95,7 +117,22 @@ export class AccountsService {
     account.status = 'Paid'
     account.discount = discount
 
-    return account.save()
+    const updatedAccount = await account.save()
+
+    await this.transactionService.create({
+      walletId: updatedAccount.walletId,
+      amount: updatedAccount.amount,
+      type:
+        updatedAccount.type === 'receivable'
+          ? 'Deposit'
+          : 'Withdrawal',
+      date: undefined,
+      description: updatedAccount.description,
+      category: updatedAccount.category,
+      createdBy: updatedAccount.createdBy,
+    })
+
+    return updatedAccount
   }
 
   private expandRepeatingAccounts(accounts: Account[]) {
