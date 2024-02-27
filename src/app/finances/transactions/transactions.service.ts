@@ -42,6 +42,10 @@ export class TransactionService {
     return this.transactionModel.find({ walletId }).lean().exec()
   }
 
+  async findAllTransactions() {
+    return this.transactionModel.find().exec()
+  }
+
   async findOne(id: string) {
     const transaction = await this.transactionModel
       .findById(id)
@@ -136,6 +140,7 @@ export class TransactionService {
     const transactions = await this.transactionModel
       .find({ walletId })
       .exec()
+    const initialBalance = wallet.initialBalance || 0
 
     const balance = transactions.reduce((total, transaction) => {
       if (transaction.type === 'Deposit') {
@@ -144,7 +149,7 @@ export class TransactionService {
         return total - transaction.amount
       }
       return total
-    }, 0)
+    }, initialBalance)
 
     wallet.balance = balance
     await wallet.save()

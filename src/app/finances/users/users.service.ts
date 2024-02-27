@@ -43,6 +43,7 @@ export class UsersService {
     await this.walletService.create(
       {
         name: 'Carteira',
+        initialBalance: 0,
         balance: 0,
         currency: 'BRL',
         createdBy: createdUser._id,

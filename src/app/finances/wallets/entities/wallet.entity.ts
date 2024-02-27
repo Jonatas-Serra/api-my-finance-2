@@ -9,8 +9,11 @@ export class Wallet {
   @Prop({ required: true })
   createdBy: string
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string
+
+  @Prop({ required: true })
+  initialBalance: number
 
   @Prop({ required: true })
   balance: number

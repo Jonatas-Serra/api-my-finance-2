@@ -1,6 +1,7 @@
 import { plainToClass } from 'class-transformer'
 import {
   Body,
+  UseGuards,
   Controller,
   Delete,
   Get,
@@ -10,21 +11,33 @@ import {
 import { Param } from '@nestjs/common'
 import { UsersSerializer } from './serializer/users.serializer'
 import { UsersService } from './users.service'
+import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
+import { IsPublic } from 'src/app/auth/decorators/is-public.decorator'
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(): Promise<any> {
     return this.usersService.findAll()
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async findOneById(@Param('id') id: string): Promise<any> {
+    return this.usersService.findOneById(id)
+  }
+
+  @IsPublic()
+  @UseGuards(JwtAuthGuard)
   @Post('signup')
   async create(@Body() createUserDto: any): Promise<any> {
     return this.usersService.create(createUserDto)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: any) {
     return plainToClass(
@@ -36,6 +49,7 @@ export class UsersController {
     )
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/update-password')
   updatePassword(
     @Param('id') id: string,
@@ -49,6 +63,7 @@ export class UsersController {
     )
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id)

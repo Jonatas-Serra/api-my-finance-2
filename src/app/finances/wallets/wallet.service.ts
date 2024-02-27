@@ -16,9 +16,18 @@ export class WalletService {
   ) {}
 
   async create(createWalletDto: CreateWalletDto, createdBy: string) {
+    const { initialBalance, ...restOfCreateWalletDto } =
+      createWalletDto
+
+    if (!initialBalance) {
+      createWalletDto.initialBalance = 0
+    }
+
     const createdWallet = new this.walletModel({
-      ...createWalletDto,
+      ...restOfCreateWalletDto,
       createdBy,
+      initialBalance,
+      balance: initialBalance,
     })
 
     return createdWallet.save()

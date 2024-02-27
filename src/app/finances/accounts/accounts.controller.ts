@@ -6,11 +6,13 @@ import {
   Param,
   Delete,
   Patch,
+  UseGuards,
 } from '@nestjs/common'
 import { AccountsService } from './accounts.service'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
 import { Account } from './entities/account.entity'
+import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
 
 interface AccountWithId extends Account {
   _id: any
@@ -20,6 +22,7 @@ interface AccountWithId extends Account {
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createAccountDto: CreateAccountDto) {
     const createdBy = createAccountDto.createdBy
@@ -33,11 +36,13 @@ export class AccountsController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.accountsService.findOne(id)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('user/:creatorId')
   async findAll(@Param('creatorId') creatorId: string) {
     const accounts = await this.accountsService.findAll(creatorId)
@@ -54,6 +59,7 @@ export class AccountsController {
     return simplifiedAccounts
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -62,11 +68,13 @@ export class AccountsController {
     return this.accountsService.update(id, updateAccountDto)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.accountsService.remove(id)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/pay')
   pay(@Param('id') id: string, @Body('discount') discount: number) {
     return this.accountsService.pay(id, discount)

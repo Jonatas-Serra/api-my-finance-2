@@ -16,6 +16,11 @@ import { WalletService } from '../wallets/wallet.service'
       { name: 'Wallet', schema: WalletSchema },
     ]),
   ],
+  exports: [
+    MongooseModule.forFeature([
+      { name: 'Account', schema: AccountSchema },
+    ]),
+  ],
   controllers: [AccountsController],
   providers: [AccountsService, TransactionService, WalletService],
 })

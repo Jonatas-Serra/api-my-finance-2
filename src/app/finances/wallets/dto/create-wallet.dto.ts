@@ -19,6 +19,10 @@ export class CreateWalletDto {
   @IsNumber()
   balance: number
 
+  @IsNotEmpty()
+  @IsNumber()
+  initialBalance: number
+
   @IsString()
   currency?: string
 
