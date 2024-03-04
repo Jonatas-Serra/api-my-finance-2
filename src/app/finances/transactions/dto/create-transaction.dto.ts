@@ -32,7 +32,12 @@ export class CreateTransactionDto {
   @IsString()
   createdBy: string
 
-  @IsNotEmpty()
   @IsString()
-  walletId: string
+  walletId?: string
+
+  @IsString()
+  sourceWalletId: string
+
+  @IsString()
+  targetWalletId: string
 }

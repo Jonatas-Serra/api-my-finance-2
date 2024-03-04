@@ -130,6 +130,8 @@ export class AccountsService {
       description: updatedAccount.description,
       category: updatedAccount.category,
       createdBy: updatedAccount.createdBy,
+      sourceWalletId: '',
+      targetWalletId: '',
     })
 
     return updatedAccount

@@ -25,6 +25,26 @@ export class WalletController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('transfer')
+  transferBetweenWallets(
+    @Body('sourceWalletId') sourceWalletId: string,
+    @Body('targetWalletId') targetWalletId: string,
+    @Body('amount') amount: number,
+    @Body('description') description: string,
+    @Body('createdBy') createdBy: string,
+    @Body('date') date: Date,
+  ) {
+    return this.walletService.transferBetweenWallets(
+      sourceWalletId,
+      targetWalletId,
+      amount,
+      description,
+      createdBy,
+      date,
+    )
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('user/:creatorId')
   findAll(@Param('creatorId') creatorId: string) {
     return this.walletService.findAll(creatorId)

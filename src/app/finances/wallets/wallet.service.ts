@@ -33,6 +33,45 @@ export class WalletService {
     return createdWallet.save()
   }
 
+  async transferBetweenWallets(
+    sourceWalletId: string,
+    targetWalletId: string,
+    amount: number,
+    description: string,
+    createdBy: string,
+    date: Date,
+  ) {
+    const sourceWallet = await this.findOne(sourceWalletId)
+    const targetWallet = await this.findOne(targetWalletId)
+
+    if (!sourceWallet || !targetWallet) {
+      throw new AppError('Source or target wallet not found')
+    }
+
+    if (sourceWallet.balance < amount) {
+      throw new AppError('Insufficient balance')
+    }
+
+    sourceWallet.balance -= amount
+    targetWallet.balance += amount
+
+    await sourceWallet.save()
+    await targetWallet.save()
+
+    const transaciton = await this.transactionService.create({
+      type: 'Transfer',
+      amount,
+      sourceWalletId,
+      targetWalletId,
+      date,
+      description,
+      category: 'Transferência entre carteiras',
+      createdBy,
+    })
+
+    return transaciton
+  }
+
   async findAll(creatorId: string) {
     const allWallets = await this.walletModel
       .find({ createdBy: creatorId })

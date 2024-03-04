@@ -9,7 +9,10 @@ export type TransactionDocument = Transaction & Document
   versionKey: false,
 })
 export class Transaction {
-  @Prop({ required: true, enum: ['Deposit', 'Withdrawal'] })
+  @Prop({
+    required: true,
+    enum: ['Deposit', 'Withdrawal', 'Transfer'],
+  })
   type: string
 
   @Prop({ required: true })
@@ -27,8 +30,14 @@ export class Transaction {
   @Prop({ required: true })
   createdBy: string
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   walletId: string
+
+  @Prop({ required: false })
+  sourceWalletId: string
+
+  @Prop({ required: false })
+  targetWalletId: string
 
   @Prop()
   createdAt: Date

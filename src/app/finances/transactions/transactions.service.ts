@@ -28,12 +28,13 @@ export class TransactionService {
     )
     const savedTransaction = await createdTransaction.save()
 
-    await this.updateWalletTransactions(
-      createTransactionDto.walletId,
-      savedTransaction._id,
-    )
-
-    await this.updateWalletBalance(createTransactionDto.walletId)
+    if (createTransactionDto.walletId) {
+      await this.updateWalletTransactions(
+        createTransactionDto.walletId,
+        savedTransaction._id,
+      )
+      await this.updateWalletBalance(createTransactionDto.walletId)
+    }
 
     return savedTransaction
   }
@@ -63,28 +64,50 @@ export class TransactionService {
     const transaction = await this.transactionModel
       .findByIdAndUpdate(id, updateTransactionDto, { new: true })
       .exec()
-
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-
     await this.updateWalletBalance(transaction.walletId)
+    return transaction
+  }
+
+  async reverseTransferTransaction(transactionId: string) {
+    const transaction = await this.findOne(transactionId)
+
+    const sourceWalletId = transaction.sourceWalletId
+    const targetWalletId = transaction.targetWalletId
+
+    await this.walletModel.updateOne(
+      { _id: sourceWalletId },
+      { $inc: { balance: transaction.amount } },
+    )
+
+    await this.walletModel.updateOne(
+      { _id: targetWalletId },
+      { $inc: { balance: -transaction.amount } },
+    )
 
     return transaction
   }
 
   async remove(id: string) {
     const transaction = await this.transactionModel
-      .findByIdAndDelete(id)
+      .findById(id)
       .exec()
 
-    if (!transaction) {
-      throw new AppError('Transaction not found')
+    if (transaction.sourceWalletId) {
+      await this.reverseTransferTransaction(transaction.id)
+      await this.transactionModel
+        .findByIdAndDelete(transaction.id)
+        .exec()
+    } else if (transaction.walletId) {
+      await this.updateWalletBalance(transaction.walletId)
+      await this.transactionModel
+        .findByIdAndDelete(transaction.id)
+        .exec()
     }
 
-    await this.updateWalletBalance(transaction.walletId)
-
-    return transaction
+    return { message: 'Transaction successfully removed' }
   }
 
   async removeByWalletId(walletId: string) {
@@ -95,7 +118,6 @@ export class TransactionService {
     const transactions = await this.transactionModel
       .find({ accountId })
       .exec()
-
     if (transactions.length > 0) {
       await this.transactionModel.deleteMany({ accountId }).exec()
     }
@@ -106,7 +128,6 @@ export class TransactionService {
       .find({ createdBy: userId })
       .exec()
     const walletIds = wallets.map((wallet) => wallet._id)
-
     await this.transactionModel
       .deleteMany({ walletId: { $in: walletIds } })
       .exec()
@@ -136,12 +157,10 @@ export class TransactionService {
     if (!wallet) {
       throw new AppError('Wallet not found')
     }
-
     const transactions = await this.transactionModel
       .find({ walletId })
       .exec()
     const initialBalance = wallet.initialBalance || 0
-
     const balance = transactions.reduce((total, transaction) => {
       if (transaction.type === 'Deposit') {
         return total + transaction.amount
@@ -150,7 +169,6 @@ export class TransactionService {
       }
       return total
     }, initialBalance)
-
     wallet.balance = balance
     await wallet.save()
   }
