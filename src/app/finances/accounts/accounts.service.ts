@@ -107,27 +107,33 @@ export class AccountsService {
     }
   }
 
-  async pay(id: string, discount: number) {
+  async pay(id: string, walletId: string, payday: Date) {
     const account = await this.accountModel.findById(id).exec()
+    const paydayDate = new Date(payday)
+
     if (!account) {
       throw new AppError('Account not found')
     }
 
+    if (account.isPaid) {
+      throw new AppError('Account already paid')
+    }
+
     account.isPaid = true
     account.status = 'Paid'
-    account.discount = discount
-
+    account.payday = paydayDate
     const updatedAccount = await account.save()
 
     await this.transactionService.create({
-      walletId: updatedAccount.walletId,
-      amount: updatedAccount.amount,
+      walletId: walletId,
+      amount: updatedAccount.value,
       type:
         updatedAccount.type === 'receivable'
           ? 'Deposit'
           : 'Withdrawal',
-      date: undefined,
-      description: updatedAccount.description,
+      date: updatedAccount.payday,
+      accountId: account._id,
+      description: updatedAccount.payeeOrPayer,
       category: updatedAccount.category,
       createdBy: updatedAccount.createdBy,
       sourceWalletId: '',
@@ -135,6 +141,27 @@ export class AccountsService {
     })
 
     return updatedAccount
+  }
+
+  async underPaidAccounts(id: string) {
+    const account = await this.accountModel.findById(id).exec()
+    const transaction =
+      await this.transactionService.findAllByAccountId(id)
+
+    if (!account) {
+      throw new AppError('Account not found')
+    }
+
+    if (!transaction || transaction.length === 0) {
+      throw new AppError('Transaction not found')
+    }
+
+    await this.transactionService.remove(transaction[0]._id)
+
+    account.isPaid = false
+    account.status = account.dueDate < new Date() ? 'Late' : 'Pending'
+
+    return account.save()
   }
 
   private expandRepeatingAccounts(accounts: Account[]) {

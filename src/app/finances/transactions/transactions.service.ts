@@ -43,6 +43,10 @@ export class TransactionService {
     return this.transactionModel.find({ walletId }).lean().exec()
   }
 
+  async findAllByAccountId(accountId: string) {
+    return this.transactionModel.find({ accountId }).lean().exec()
+  }
+
   async findAllTransactions() {
     return this.transactionModel.find().exec()
   }
@@ -95,6 +99,10 @@ export class TransactionService {
       .findById(id)
       .exec()
 
+    if (!transaction) {
+      throw new AppError('Transaction not found')
+    }
+
     if (transaction.sourceWalletId) {
       await this.reverseTransferTransaction(transaction.id)
       await this.transactionModel
@@ -107,7 +115,9 @@ export class TransactionService {
         .exec()
     }
 
-    return { message: 'Transaction successfully removed' }
+    await this.transactionModel.findByIdAndDelete(id).exec()
+
+    return transaction
   }
 
   async removeByWalletId(walletId: string) {

@@ -67,6 +67,7 @@ export class WalletService {
       description,
       category: 'Transferência entre carteiras',
       createdBy,
+      walletId: targetWalletId,
     })
 
     return transaciton

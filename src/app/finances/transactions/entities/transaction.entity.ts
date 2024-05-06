@@ -21,7 +21,7 @@ export class Transaction {
   @Prop({ required: true })
   date: Date
 
-  @Prop()
+  @Prop({ required: false })
   description: string
 
   @Prop({ required: true })
@@ -32,6 +32,9 @@ export class Transaction {
 
   @Prop({ required: false })
   walletId: string
+
+  @Prop({ required: false })
+  accountId: string
 
   @Prop({ required: false })
   sourceWalletId: string

@@ -75,8 +75,15 @@ export class AccountsController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/pay')
-  pay(@Param('id') id: string, @Body('discount') discount: number) {
-    return this.accountsService.pay(id, discount)
+  @Post(':id/pay')
+  pay(@Param('id') id: string, @Body() requestBody: any) {
+    const { walletId, payday } = requestBody
+    return this.accountsService.pay(id, walletId, payday)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/underPay')
+  underPay(@Param('id') id: string) {
+    return this.accountsService.underPaidAccounts(id)
   }
 }

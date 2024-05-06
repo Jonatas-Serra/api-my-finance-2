@@ -36,6 +36,9 @@ export class CreateTransactionDto {
   walletId?: string
 
   @IsString()
+  accountId?: string
+
+  @IsString()
   sourceWalletId: string
 
   @IsString()

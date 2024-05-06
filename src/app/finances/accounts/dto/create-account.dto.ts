@@ -60,5 +60,9 @@ export class CreateAccountDto {
 
   @IsNotEmpty()
   @IsString()
+  status: string
+
+  @IsNotEmpty()
+  @IsString()
   walletId: string
 }
