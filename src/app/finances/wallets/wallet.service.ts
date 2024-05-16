@@ -1,4 +1,3 @@
-import AppError from 'src/shared/errors/AppError'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
@@ -6,6 +5,7 @@ import { Wallet, WalletDocument } from './entities/wallet.entity'
 import { CreateWalletDto } from './dto/create-wallet.dto'
 import { UpdateWalletDto } from './dto/update-wallet.dto'
 import { TransactionService } from '../transactions/transactions.service'
+import AppError from 'src/shared/errors/AppError'
 
 @Injectable()
 export class WalletService {
@@ -19,14 +19,16 @@ export class WalletService {
     const { initialBalance, ...restOfCreateWalletDto } =
       createWalletDto
 
-    if (!initialBalance) {
-      createWalletDto.initialBalance = 0
+    if (initialBalance < 0) {
+      throw new AppError(
+        'Initial balance must be greater than or equal to 0',
+      )
     }
 
     const createdWallet = new this.walletModel({
       ...restOfCreateWalletDto,
       createdBy,
-      initialBalance,
+      initialBalance: initialBalance || 0,
       balance: initialBalance,
     })
 
@@ -41,8 +43,12 @@ export class WalletService {
     createdBy: string,
     date: Date,
   ) {
-    const sourceWallet = await this.findOne(sourceWalletId)
-    const targetWallet = await this.findOne(targetWalletId)
+    const sourceWallet = await this.walletModel
+      .findById(sourceWalletId)
+      .exec()
+    const targetWallet = await this.walletModel
+      .findById(targetWalletId)
+      .exec()
 
     if (!sourceWallet || !targetWallet) {
       throw new AppError('Source or target wallet not found')
@@ -52,13 +58,13 @@ export class WalletService {
       throw new AppError('Insufficient balance')
     }
 
-    sourceWallet.balance -= amount
-    targetWallet.balance += amount
+    const sourceBalance = sourceWallet.balance - amount
+    const targetBalance = targetWallet.balance + amount
 
-    await sourceWallet.save()
-    await targetWallet.save()
+    await this.setWalletBalance(sourceWalletId, sourceBalance)
+    await this.setWalletBalance(targetWalletId, targetBalance)
 
-    const transaciton = await this.transactionService.create({
+    const transaction = await this.transactionService.create({
       type: 'Transfer',
       amount,
       sourceWalletId,
@@ -70,15 +76,14 @@ export class WalletService {
       walletId: targetWalletId,
     })
 
-    return transaciton
+    return transaction
   }
 
   async findAll(creatorId: string) {
-    const allWallets = await this.walletModel
+    return this.walletModel
       .find({ createdBy: creatorId })
       .lean()
       .exec()
-    return allWallets
   }
 
   async findOne(id: string) {
@@ -114,5 +119,45 @@ export class WalletService {
 
   async removeByUserId(userId: string) {
     await this.walletModel.deleteMany({ createdBy: userId }).exec()
+  }
+
+  private async setWalletBalance(walletId: string, balance: number) {
+    const wallet = await this.walletModel.findById(walletId).exec()
+    if (!wallet) {
+      throw new AppError('Wallet not found')
+    }
+
+    wallet.balance = balance
+    await wallet.save()
+  }
+
+  private async calculateWalletBalance(walletId: string) {
+    const wallet = await this.walletModel.findById(walletId).exec()
+    if (!wallet) {
+      throw new AppError('Wallet not found')
+    }
+
+    const transactions =
+      await this.transactionService.findAllByWalletId(walletId)
+
+    let balance = wallet.balance
+
+    transactions.forEach((transaction) => {
+      if (
+        transaction.type === 'Deposit' ||
+        transaction.type === 'Transfer'
+      ) {
+        balance += transaction.amount
+      } else if (transaction.type === 'Withdrawal') {
+        balance -= transaction.amount
+      }
+    })
+
+    return balance
+  }
+
+  private async updateWalletBalance(walletId: string) {
+    const balance = await this.calculateWalletBalance(walletId)
+    await this.setWalletBalance(walletId, balance)
   }
 }

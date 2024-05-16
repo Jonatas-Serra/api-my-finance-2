@@ -21,7 +21,7 @@ export class Wallet {
   @Prop()
   currency: string
 
-  @Prop({ default: [] })
+  @Prop({ type: [Transaction] })
   transactions: Transaction[]
 
   @Prop({ default: Date.now })

@@ -33,7 +33,6 @@ export class TransactionService {
         createTransactionDto.walletId,
         savedTransaction._id,
       )
-      await this.updateWalletBalance(createTransactionDto.walletId)
     }
 
     return savedTransaction
@@ -105,19 +104,25 @@ export class TransactionService {
 
     if (transaction.sourceWalletId) {
       await this.reverseTransferTransaction(transaction.id)
-      await this.transactionModel
-        .findByIdAndDelete(transaction.id)
-        .exec()
     } else if (transaction.walletId) {
       await this.updateWalletBalance(transaction.walletId)
-      await this.transactionModel
-        .findByIdAndDelete(transaction.id)
-        .exec()
     }
+
+    await this.removeTransactionFromWallet(transaction.walletId, id)
 
     await this.transactionModel.findByIdAndDelete(id).exec()
 
     return transaction
+  }
+
+  async removeTransactionFromWallet(
+    walletId: string,
+    transactionId: string,
+  ) {
+    await this.walletModel.updateOne(
+      { _id: walletId },
+      { $pull: { transactions: transactionId } },
+    )
   }
 
   async removeByWalletId(walletId: string) {
@@ -125,12 +130,7 @@ export class TransactionService {
   }
 
   async removeByAccountId(accountId: string) {
-    const transactions = await this.transactionModel
-      .find({ accountId })
-      .exec()
-    if (transactions.length > 0) {
-      await this.transactionModel.deleteMany({ accountId }).exec()
-    }
+    await this.transactionModel.deleteMany({ accountId }).exec()
   }
 
   async removeByUserId(userId: string) {
@@ -154,6 +154,9 @@ export class TransactionService {
     const transaction = await this.transactionModel
       .findById(transactionId)
       .exec()
+    if (!transaction) {
+      throw new AppError('Transaction not found')
+    }
     wallet.transactions.push(transaction)
     await wallet.save()
   }
@@ -170,15 +173,20 @@ export class TransactionService {
     const transactions = await this.transactionModel
       .find({ walletId })
       .exec()
-    const initialBalance = wallet.initialBalance || 0
-    const balance = transactions.reduce((total, transaction) => {
-      if (transaction.type === 'Deposit') {
-        return total + transaction.amount
+
+    let balance = wallet.balance
+
+    transactions.forEach((transaction) => {
+      if (
+        transaction.type === 'Deposit' ||
+        transaction.type === 'Transfer'
+      ) {
+        balance += transaction.amount
       } else if (transaction.type === 'Withdrawal') {
-        return total - transaction.amount
+        balance -= transaction.amount
       }
-      return total
-    }, initialBalance)
+    })
+
     wallet.balance = balance
     await wallet.save()
   }
