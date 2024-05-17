@@ -131,7 +131,7 @@ export class WalletService {
     await wallet.save()
   }
 
-  private async calculateWalletBalance(walletId: string) {
+  public async calculateWalletBalance(walletId: string) {
     const wallet = await this.walletModel.findById(walletId).exec()
     if (!wallet) {
       throw new AppError('Wallet not found')

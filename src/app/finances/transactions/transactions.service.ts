@@ -9,7 +9,6 @@ import {
   Wallet,
   WalletDocument,
 } from '../wallets/entities/wallet.entity'
-import { WalletService } from '../wallets/wallet.service'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import AppError from 'src/shared/errors/AppError'
@@ -19,8 +18,6 @@ export class TransactionService {
   constructor(
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
-    @InjectModel(Wallet.name)
-    private walletService: WalletService,
     @InjectModel(Wallet.name)
     private walletModel: Model<WalletDocument>,
   ) {}
@@ -38,9 +35,7 @@ export class TransactionService {
       )
     }
 
-    await this.walletService.updateWalletBalance(
-      createTransactionDto.walletId,
-    )
+    await this.updateWalletBalance(createTransactionDto.walletId)
 
     return savedTransaction
   }
@@ -77,7 +72,7 @@ export class TransactionService {
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-    await this.walletService.updateWalletBalance(transaction.walletId)
+    await this.updateWalletBalance(transaction.walletId)
     return transaction
   }
 
@@ -112,13 +107,10 @@ export class TransactionService {
     if (transaction.sourceWalletId) {
       await this.reverseTransferTransaction(transaction.id)
     } else if (transaction.walletId) {
-      await this.walletService.updateWalletBalance(
-        transaction.walletId,
-      )
+      await this.updateWalletBalance(transaction.walletId)
     }
 
     await this.removeTransactionFromWallet(transaction.walletId, id)
-
     await this.transactionModel.findByIdAndDelete(id).exec()
 
     return transaction
@@ -172,5 +164,49 @@ export class TransactionService {
 
   async findAll(creatorId: string) {
     return this.transactionModel.find({ createdBy: creatorId }).exec()
+  }
+
+  private async calculateWalletBalance(
+    walletId: string,
+  ): Promise<number> {
+    const wallet = await this.walletModel.findById(walletId).exec()
+    if (!wallet) {
+      throw new AppError('Wallet not found')
+    }
+
+    const transactions = await this.transactionModel
+      .find({ walletId })
+      .lean()
+      .exec()
+
+    let balance = wallet.initialBalance
+
+    transactions.forEach((transaction) => {
+      if (
+        transaction.type === 'Deposit' ||
+        transaction.type === 'Transfer'
+      ) {
+        balance += transaction.amount
+      } else if (transaction.type === 'Withdrawal') {
+        balance -= transaction.amount
+      }
+    })
+
+    return balance
+  }
+
+  private async setWalletBalance(walletId: string, balance: number) {
+    const wallet = await this.walletModel.findById(walletId).exec()
+    if (!wallet) {
+      throw new AppError('Wallet not found')
+    }
+
+    wallet.balance = balance
+    await wallet.save()
+  }
+
+  async updateWalletBalance(walletId: string) {
+    const balance = await this.calculateWalletBalance(walletId)
+    await this.setWalletBalance(walletId, balance)
   }
 }
