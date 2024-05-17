@@ -1,4 +1,3 @@
-import { WalletService } from './../wallets/wallet.service'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
@@ -16,7 +15,6 @@ import AppError from 'src/shared/errors/AppError'
 
 @Injectable()
 export class TransactionService {
-  WalletService: any
   constructor(
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
@@ -36,10 +34,6 @@ export class TransactionService {
         savedTransaction._id,
       )
     }
-
-    await this.WalletService.updateWalletBalance(
-      createTransactionDto.walletId,
-    )
 
     return savedTransaction
   }
@@ -76,7 +70,7 @@ export class TransactionService {
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-    await this.WalletService.updateWalletBalance(transaction.walletId)
+    await this.updateWalletBalance(transaction.walletId)
     return transaction
   }
 
