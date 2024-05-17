@@ -156,7 +156,7 @@ export class WalletService {
     return balance
   }
 
-  private async updateWalletBalance(walletId: string) {
+  public async updateWalletBalance(walletId: string) {
     const balance = await this.calculateWalletBalance(walletId)
     await this.setWalletBalance(walletId, balance)
   }
