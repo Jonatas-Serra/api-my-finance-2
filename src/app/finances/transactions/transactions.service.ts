@@ -111,7 +111,9 @@ export class TransactionService {
     if (transaction.sourceWalletId) {
       await this.reverseTransferTransaction(transaction.id)
     } else if (transaction.walletId) {
-      await this.updateWalletBalance(transaction.walletId)
+      await this.walletService.updateWalletBalance(
+        transaction.walletId,
+      )
     }
 
     await this.removeTransactionFromWallet(transaction.walletId, id)
@@ -169,31 +171,5 @@ export class TransactionService {
 
   async findAll(creatorId: string) {
     return this.transactionModel.find({ createdBy: creatorId }).exec()
-  }
-
-  private async updateWalletBalance(walletId: string) {
-    const wallet = await this.walletModel.findById(walletId).exec()
-    if (!wallet) {
-      throw new AppError('Wallet not found')
-    }
-    const transactions = await this.transactionModel
-      .find({ walletId })
-      .exec()
-
-    let balance = wallet.balance
-
-    transactions.forEach((transaction) => {
-      if (
-        transaction.type === 'Deposit' ||
-        transaction.type === 'Transfer'
-      ) {
-        balance += transaction.amount
-      } else if (transaction.type === 'Withdrawal') {
-        balance -= transaction.amount
-      }
-    })
-
-    wallet.balance = balance
-    await wallet.save()
   }
 }
