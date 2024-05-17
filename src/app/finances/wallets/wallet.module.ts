@@ -20,6 +20,7 @@ import { TransactionSchema } from '../transactions/entities/transaction.entity'
     MongooseModule.forFeature([
       { name: Wallet.name, schema: WalletSchema },
     ]),
+    WalletService,
   ],
   controllers: [WalletController],
   providers: [WalletService, AccountsService, TransactionService],

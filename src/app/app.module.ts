@@ -12,11 +12,11 @@ import 'dotenv/config'
     MongooseModule.forRoot(
       `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@myfinance.izkzvzb.mongodb.net/?retryWrites=true&w=majority`,
     ),
+    TransactionsModule,
+    WalletModule,
     UsersModule,
     AuthModule,
     AccountsModule,
-    WalletModule,
-    TransactionsModule,
   ],
   providers: [],
   controllers: [],
