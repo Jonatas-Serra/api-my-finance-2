@@ -9,10 +9,10 @@ import {
   Wallet,
   WalletDocument,
 } from '../wallets/entities/wallet.entity'
+import { WalletService } from '../wallets/wallet.service'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import AppError from 'src/shared/errors/AppError'
-import { WalletService } from '../wallets/wallet.service'
 
 @Injectable()
 export class TransactionService {
@@ -20,8 +20,9 @@ export class TransactionService {
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
     @InjectModel(Wallet.name)
-    private walletModel: Model<WalletDocument>,
     private walletService: WalletService,
+    @InjectModel(Wallet.name)
+    private walletModel: Model<WalletDocument>,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
