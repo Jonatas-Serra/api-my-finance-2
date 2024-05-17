@@ -12,6 +12,7 @@ import {
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import AppError from 'src/shared/errors/AppError'
+import { WalletService } from '../wallets/wallet.service'
 
 @Injectable()
 export class TransactionService {
@@ -20,6 +21,7 @@ export class TransactionService {
     private transactionModel: Model<TransactionDocument>,
     @InjectModel(Wallet.name)
     private walletModel: Model<WalletDocument>,
+    private walletService: WalletService,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -34,6 +36,10 @@ export class TransactionService {
         savedTransaction._id,
       )
     }
+
+    await this.walletService.updateWalletBalance(
+      createTransactionDto.walletId,
+    )
 
     return savedTransaction
   }
@@ -70,7 +76,7 @@ export class TransactionService {
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-    await this.updateWalletBalance(transaction.walletId)
+    await this.walletService.updateWalletBalance(transaction.walletId)
     return transaction
   }
 
