@@ -19,6 +19,9 @@ export class AccountsService {
     createAccountDto: CreateAccountDto,
     createdBy: string,
   ) {
+    createAccountDto.status = this.definedAccountStatus(
+      createAccountDto.dueDate,
+    )
     const createdAccount = new this.accountModel({
       ...createAccountDto,
       createdBy,
@@ -66,15 +69,26 @@ export class AccountsService {
   }
 
   async update(id: string, updateAccountDto: UpdateAccountDto) {
-    const account = await this.accountModel
-      .findByIdAndUpdate(id, updateAccountDto, { new: true })
-      .exec()
-
+    const account = await this.accountModel.findById(id).exec()
     if (!account) {
       throw new AppError('Account not found')
     }
 
-    return account
+    if (account.status === 'Paid') {
+      throw new AppError('Account already paid')
+    } else {
+      updateAccountDto.status = this.definedAccountStatus(
+        updateAccountDto.dueDate,
+      )
+    }
+
+    const updatedAccount = await this.accountModel.findByIdAndUpdate(
+      id,
+      updateAccountDto,
+      { new: true },
+    )
+
+    return updatedAccount
   }
 
   async remove(id: string) {
@@ -195,5 +209,38 @@ export class AccountsService {
       newDueDate.getMonth() + repeatIndex * repeatInterval,
     )
     return newDueDate
+  }
+
+  async updateAccountStatus() {
+    const currentDate = new Date()
+    const accounts = await this.accountModel.find().exec()
+
+    for (const account of accounts) {
+      if (account.status !== 'Paid') {
+        const dueDate = new Date(account.dueDate)
+        if (dueDate < currentDate) {
+          account.status = 'Late'
+        } else {
+          account.status = 'Pending'
+        }
+        await account.save()
+      }
+    }
+  }
+
+  private definedAccountStatus(dueDate: Date) {
+    const currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0)
+
+    const dueDateWithoutTime = new Date(dueDate)
+    dueDateWithoutTime.setHours(0, 0, 0, 0)
+
+    if (dueDateWithoutTime > currentDate) {
+      return 'Pending'
+    } else if (dueDateWithoutTime < currentDate) {
+      return 'Late'
+    } else {
+      return 'Pending'
+    }
   }
 }
