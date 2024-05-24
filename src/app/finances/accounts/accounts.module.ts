@@ -24,6 +24,7 @@ import { ScheduleModule } from '@nestjs/schedule'
     MongooseModule.forFeature([
       { name: 'Account', schema: AccountSchema },
     ]),
+    AccountsService,
   ],
   controllers: [AccountsController],
   providers: [

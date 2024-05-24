@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Document } from 'mongoose'
+import { Document, Schema as MongooseSchema } from 'mongoose'
 import { Transaction } from '../../transactions/entities/transaction.entity'
 
 export type WalletDocument = Wallet & Document
@@ -21,8 +21,13 @@ export class Wallet {
   @Prop()
   currency: string
 
-  @Prop({ type: [Transaction] })
-  transactions: Transaction[]
+  @Prop({
+    type: [
+      { type: MongooseSchema.Types.ObjectId, ref: 'Transaction' },
+    ],
+    default: [],
+  })
+  transactions: MongooseSchema.Types.ObjectId[]
 
   @Prop({ default: Date.now })
   createdAt: Date

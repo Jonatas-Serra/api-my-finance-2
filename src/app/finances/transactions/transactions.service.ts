@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Inject, forwardRef } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import {
@@ -12,6 +12,7 @@ import {
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import AppError from 'src/shared/errors/AppError'
+import { WalletService } from '../wallets/wallet.service'
 
 @Injectable()
 export class TransactionService {
@@ -20,6 +21,8 @@ export class TransactionService {
     private transactionModel: Model<TransactionDocument>,
     @InjectModel(Wallet.name)
     private walletModel: Model<WalletDocument>,
+    @Inject(forwardRef(() => WalletService))
+    private walletService: WalletService,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -107,23 +110,16 @@ export class TransactionService {
     if (transaction.sourceWalletId) {
       await this.reverseTransferTransaction(transaction.id)
     } else if (transaction.walletId) {
+      await this.walletService.removeTransactionFromWallet(
+        transaction.walletId,
+        transaction._id,
+      )
       await this.updateWalletBalance(transaction.walletId)
     }
 
-    await this.removeTransactionFromWallet(transaction.walletId, id)
     await this.transactionModel.findByIdAndDelete(id).exec()
 
     return transaction
-  }
-
-  async removeTransactionFromWallet(
-    walletId: string,
-    transactionId: string,
-  ) {
-    await this.walletModel.updateOne(
-      { _id: walletId },
-      { $pull: { transactions: transactionId } },
-    )
   }
 
   async removeByWalletId(walletId: string) {
@@ -158,7 +154,7 @@ export class TransactionService {
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-    wallet.transactions.push(transaction)
+    wallet.transactions.push(transaction._id) // Adicione apenas o _id
     await wallet.save()
   }
 

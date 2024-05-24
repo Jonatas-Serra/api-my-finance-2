@@ -70,4 +70,16 @@ export class WalletController {
   remove(@Param('id') id: string) {
     return this.walletService.remove(id)
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('rmvtrans')
+  removeTransactionFromWallet(
+    @Body('walletId') walletId: string,
+    @Body('transactionId') transactionId: string,
+  ) {
+    return this.walletService.removeTransactionFromWallet(
+      walletId,
+      transactionId,
+    )
+  }
 }

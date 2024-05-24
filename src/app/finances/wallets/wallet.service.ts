@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { Wallet, WalletDocument } from './entities/wallet.entity'
@@ -12,6 +12,7 @@ export class WalletService {
   constructor(
     @InjectModel(Wallet.name)
     private walletModel: Model<WalletDocument>,
+    @Inject(forwardRef(() => TransactionService))
     private transactionService: TransactionService,
   ) {}
 
@@ -159,5 +160,34 @@ export class WalletService {
   public async updateWalletBalance(walletId: string) {
     const balance = await this.calculateWalletBalance(walletId)
     await this.setWalletBalance(walletId, balance)
+  }
+
+  async removeTransactionFromWallet(
+    walletId: string,
+    transactionId: string,
+  ) {
+    const wallet = await this.walletModel.findById(walletId).exec()
+    if (!wallet) {
+      throw new AppError('Wallet not found')
+    }
+
+    console.log('Wallet transactions:', wallet.transactions)
+    console.log('Transaction ID to remove:', transactionId)
+
+    const transactionIdStr = transactionId.toString()
+
+    const transactionIndex = wallet.transactions.findIndex((id) => {
+      console.log('Comparing with transaction ID:', id.toString())
+      return id.toString() === transactionIdStr
+    })
+
+    console.log('Found transaction index:', transactionIndex)
+
+    if (transactionIndex === -1) {
+      throw new AppError('Transaction not found in wallet')
+    }
+
+    wallet.transactions.splice(transactionIndex, 1)
+    await wallet.save()
   }
 }

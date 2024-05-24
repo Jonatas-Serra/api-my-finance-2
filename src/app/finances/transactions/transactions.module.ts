@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import {
   Transaction,
@@ -19,7 +19,7 @@ import { AccountSchema } from '../accounts/entities/account.entity'
       { name: 'Wallet', schema: WalletSchema },
       { name: 'Account', schema: AccountSchema },
     ]),
-    WalletModule,
+    forwardRef(() => WalletModule),
   ],
   exports: [
     MongooseModule.forFeature([
