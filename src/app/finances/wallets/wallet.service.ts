@@ -122,7 +122,7 @@ export class WalletService {
     await this.walletModel.deleteMany({ createdBy: userId }).exec()
   }
 
-  async setWalletBalance(walletId: string, balance: number) {
+  private async setWalletBalance(walletId: string, balance: number) {
     const wallet = await this.walletModel.findById(walletId).exec()
     if (!wallet) {
       throw new AppError('Wallet not found')

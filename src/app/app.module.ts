@@ -18,7 +18,7 @@ import 'dotenv/config'
     AuthModule,
     AccountsModule,
   ],
-  controllers: [],
   providers: [],
+  controllers: [],
 })
 export class AppModule {}

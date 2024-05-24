@@ -46,11 +46,7 @@ export class Account {
   @Prop({ default: false })
   isPaid: boolean
 
-  @Prop({
-    required: true,
-    enum: ['Paid', 'Pending', 'Late'],
-    default: 'Pending',
-  })
+  @Prop({ required: true, enum: ['Paid', 'Pending', 'Late'] })
   status: string
 
   @Prop()
