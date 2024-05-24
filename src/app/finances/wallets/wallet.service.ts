@@ -171,17 +171,11 @@ export class WalletService {
       throw new AppError('Wallet not found')
     }
 
-    console.log('Wallet transactions:', wallet.transactions)
-    console.log('Transaction ID to remove:', transactionId)
-
     const transactionIdStr = transactionId.toString()
 
     const transactionIndex = wallet.transactions.findIndex((id) => {
-      console.log('Comparing with transaction ID:', id.toString())
       return id.toString() === transactionIdStr
     })
-
-    console.log('Found transaction index:', transactionIndex)
 
     if (transactionIndex === -1) {
       throw new AppError('Transaction not found in wallet')

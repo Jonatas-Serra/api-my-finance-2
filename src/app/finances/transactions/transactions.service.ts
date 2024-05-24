@@ -114,10 +114,10 @@ export class TransactionService {
         transaction.walletId,
         transaction._id,
       )
-      await this.updateWalletBalance(transaction.walletId)
     }
-
     await this.transactionModel.findByIdAndDelete(id).exec()
+
+    await this.updateWalletBalance(transaction.walletId)
 
     return transaction
   }
@@ -154,7 +154,7 @@ export class TransactionService {
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-    wallet.transactions.push(transaction._id) // Adicione apenas o _id
+    wallet.transactions.push(transaction._id)
     await wallet.save()
   }
 
