@@ -7,23 +7,27 @@ import {
   Get,
   Patch,
   Post,
+  Param,
 } from '@nestjs/common'
-import { Param } from '@nestjs/common'
 import { UsersSerializer } from './serializer/users.serializer'
 import { UsersService } from './users.service'
 import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
 import { IsPublic } from 'src/app/auth/decorators/is-public.decorator'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(): Promise<any> {
     return this.usersService.findAll()
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOneById(@Param('id') id: string): Promise<any> {
@@ -31,12 +35,14 @@ export class UsersController {
   }
 
   @IsPublic()
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('signup')
   async create(@Body() createUserDto: any): Promise<any> {
     return this.usersService.create(createUserDto)
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: any) {
@@ -49,6 +55,7 @@ export class UsersController {
     )
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id/update-password')
   updatePassword(
@@ -63,6 +70,7 @@ export class UsersController {
     )
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {

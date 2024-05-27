@@ -12,11 +12,14 @@ import { WalletService } from './wallet.service'
 import { CreateWalletDto } from './dto/create-wallet.dto'
 import { UpdateWalletDto } from './dto/update-wallet.dto'
 import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 
+@ApiTags('Wallets')
 @Controller('wallets')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createWalletDto: CreateWalletDto) {
@@ -24,6 +27,7 @@ export class WalletController {
     return this.walletService.create(createWalletDto, createdBy)
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('transfer')
   transferBetweenWallets(
@@ -44,18 +48,21 @@ export class WalletController {
     )
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('user/:creatorId')
   findAll(@Param('creatorId') creatorId: string) {
     return this.walletService.findAll(creatorId)
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.walletService.findOne(id)
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
@@ -65,12 +72,14 @@ export class WalletController {
     return this.walletService.update(id, updateWalletDto)
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.walletService.remove(id)
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('rmvtrans')
   removeTransactionFromWallet(

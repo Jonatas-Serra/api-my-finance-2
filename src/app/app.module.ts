@@ -1,5 +1,5 @@
-import { MongooseModule } from '@nestjs/mongoose'
 import { Module } from '@nestjs/common'
+import { MongooseModule } from '@nestjs/mongoose'
 import { UsersModule } from './finances/users/users.module'
 import { AccountsModule } from './finances/accounts/accounts.module'
 import { AuthModule } from './auth/auth.module'
