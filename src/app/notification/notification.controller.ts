@@ -5,8 +5,10 @@ import {
   Param,
   Body,
   Patch,
+  UseGuards,
 } from '@nestjs/common'
 import { NotificationsService } from './notification.service'
+import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
 
 @Controller('notifications')
 export class NotificationsController {
@@ -14,6 +16,7 @@ export class NotificationsController {
     private readonly notificationsService: NotificationsService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(
     @Body()
