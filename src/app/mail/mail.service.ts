@@ -25,7 +25,6 @@ export class MailService {
           username: user.name,
         },
       })
-      console.log('Email sent')
     } catch (e) {
       console.error(e)
     }

@@ -16,33 +16,52 @@ export class TasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_8AM)
   async handleCron() {
-    const accounts = await this.accountsService.findDueAccounts()
-    for (const account of accounts) {
-      const user = await this.usersService.findOneById(
-        account.createdBy,
-      )
-      await this.notificationsService.create(
-        account.createdBy,
-        `Sua conta no valor ${new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        }).format(
-          account.value,
-        )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
-          timeZone: 'UTC',
-        }).format(new Date(account.dueDate))}`,
-      )
-      await this.mailService.sendAccountDueNotification(
-        user.email,
-        `Sua conta no valor ${new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        }).format(
-          account.value,
-        )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
-          timeZone: 'UTC',
-        }).format(new Date(account.dueDate))}`,
-      )
+    try {
+      const accounts = await this.accountsService.findDueAccounts()
+      for (const account of accounts) {
+        try {
+          const user = await this.usersService.findOneById(
+            account.createdBy,
+          )
+
+          const existingNotification =
+            await this.notificationsService.findByAccountId(
+              account._id,
+            )
+          if (existingNotification) {
+            continue
+          }
+
+          await this.notificationsService.create(
+            account.createdBy,
+            `Sua conta no valor ${new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(
+              account.value,
+            )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
+              timeZone: 'UTC',
+            }).format(new Date(account.dueDate))}`,
+            account._id.toString(),
+          )
+
+          await this.mailService.sendAccountDueNotification(
+            user.email,
+            `Sua conta no valor ${new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(
+              account.value,
+            )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
+              timeZone: 'UTC',
+            }).format(new Date(account.dueDate))}`,
+          )
+        } catch (error) {
+          throw error
+        }
+      }
+    } catch (error) {
+      throw error
     }
   }
 }

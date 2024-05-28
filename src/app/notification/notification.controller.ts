@@ -15,13 +15,24 @@ export class NotificationsController {
   ) {}
 
   @Post()
-  create(@Body() body: { userId: string; message: string }) {
-    return this.notificationsService.create(body.userId, body.message)
+  create(
+    @Body()
+    body: {
+      userId: string
+      message: string
+      accountId: string
+    },
+  ) {
+    return this.notificationsService.create(
+      body.userId,
+      body.message,
+      body.accountId,
+    )
   }
 
   @Get(':userId')
   findAll(@Param('userId') userId: string) {
-    return this.notificationsService.findAll(userId)
+    return this.notificationsService.findAllByUserId(userId)
   }
 
   @Patch(':id/read')

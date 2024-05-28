@@ -12,6 +12,12 @@ export class Notification extends Document {
   @Prop({ required: true })
   read: boolean
 
+  @Prop({ default: null })
+  accountId: string
+
+  @Prop({ default: null })
+  readAt: Date
+
   @Prop({ default: Date.now })
   createdAt: Date
 }
