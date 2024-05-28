@@ -14,11 +14,11 @@ import { TransactionsModule } from '../transactions/transactions.module'
   imports: [
     MongooseModule.forFeature([
       { name: Wallet.name, schema: WalletSchema },
-      { name: 'Account', schema: AccountSchema },
       { name: 'Transaction', schema: TransactionSchema },
+      { name: 'Account', schema: AccountSchema },
     ]),
-    AccountsModule,
     forwardRef(() => TransactionsModule),
+    forwardRef(() => AccountsModule),
   ],
   exports: [
     MongooseModule.forFeature([

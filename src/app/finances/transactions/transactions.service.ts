@@ -13,6 +13,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import AppError from 'src/shared/errors/AppError'
 import { WalletService } from '../wallets/wallet.service'
+import { AccountsService } from '../accounts/accounts.service'
 
 @Injectable()
 export class TransactionService {
@@ -23,6 +24,8 @@ export class TransactionService {
     private walletModel: Model<WalletDocument>,
     @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
+    @Inject(forwardRef(() => AccountsService))
+    private accountsService: AccountsService,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -98,7 +101,7 @@ export class TransactionService {
     return transaction
   }
 
-  async remove(id: string) {
+  async remove(id: string, preventRecursiveCall = false) {
     const transaction = await this.transactionModel
       .findById(id)
       .exec()
@@ -115,9 +118,19 @@ export class TransactionService {
         transaction._id,
       )
     }
+
+    if (transaction.accountId && !preventRecursiveCall) {
+      await this.accountsService.underPaidAccounts(
+        transaction.accountId,
+        true,
+      )
+    }
+
     await this.transactionModel.findByIdAndDelete(id).exec()
 
-    await this.updateWalletBalance(transaction.walletId)
+    if (transaction.walletId) {
+      await this.updateWalletBalance(transaction.walletId)
+    }
 
     return transaction
   }

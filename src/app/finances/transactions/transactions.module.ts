@@ -11,6 +11,7 @@ import { WalletSchema } from '../wallets/entities/wallet.entity'
 import { WalletService } from '../wallets/wallet.service'
 import { AccountsService } from '../accounts/accounts.service'
 import { AccountSchema } from '../accounts/entities/account.entity'
+import { AccountsModule } from '../accounts/accounts.module'
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AccountSchema } from '../accounts/entities/account.entity'
       { name: 'Account', schema: AccountSchema },
     ]),
     forwardRef(() => WalletModule),
+    forwardRef(() => AccountsModule),
   ],
   exports: [
     MongooseModule.forFeature([

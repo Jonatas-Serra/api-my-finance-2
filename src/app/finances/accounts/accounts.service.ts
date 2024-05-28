@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { TransactionService } from '../transactions/transactions.service'
@@ -12,6 +12,7 @@ export class AccountsService {
   constructor(
     @InjectModel(Account.name)
     private accountModel: Model<AccountDocument>,
+    @Inject(forwardRef(() => TransactionService))
     private transactionService: TransactionService,
   ) {}
 
@@ -90,8 +91,6 @@ export class AccountsService {
     )
 
     return updatedAccount
-
-    return account
   }
 
   async remove(id: string) {
@@ -160,7 +159,7 @@ export class AccountsService {
     return updatedAccount
   }
 
-  async underPaidAccounts(id: string) {
+  async underPaidAccounts(id: string, preventRecursiveCall = false) {
     const account = await this.accountModel.findById(id).exec()
     const transaction =
       await this.transactionService.findAllByAccountId(id)
@@ -173,7 +172,10 @@ export class AccountsService {
       throw new AppError('Transaction not found')
     }
 
-    await this.transactionService.remove(transaction[0]._id)
+    await this.transactionService.remove(
+      transaction[0]._id,
+      preventRecursiveCall,
+    )
 
     account.isPaid = false
     account.status = account.dueDate < new Date() ? 'Late' : 'Pending'
