@@ -6,9 +6,9 @@ import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import * as bcrypt from 'bcrypt'
 import AppError from 'src/shared/errors/AppError'
-import { WalletService } from '../wallets/wallet.service'
-import { TransactionService } from '../transactions/transactions.service'
-import { AccountsService } from '../accounts/accounts.service'
+import { WalletService } from '../finances/wallets/wallet.service'
+import { TransactionService } from '../finances/transactions/transactions.service'
+import { AccountsService } from '../finances/accounts/accounts.service'
 
 @Injectable()
 export class UsersService {

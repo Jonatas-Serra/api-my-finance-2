@@ -1,6 +1,6 @@
-import { User } from '../../app/finances/users/entities/user.entity'
+import { User } from '../users/entities/user.entity'
 import { Injectable } from '@nestjs/common'
-import { UsersService } from '../../app/finances/users/users.service'
+import { UsersService } from '../users/users.service'
 import * as bcrypt from 'bcrypt'
 import { JwtService } from '@nestjs/jwt'
 import AppError from 'src/shared/errors/AppError'

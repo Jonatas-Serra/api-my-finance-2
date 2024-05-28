@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F5F5F5;
+            color: #37465B;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #733cf8;
+            color: #F5F5F5;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            background-color: #08C6AB;
+            color: #F5F5F5;
+            text-align: center;
+            padding: 10px;
+        }
+        .button {
+            background-color: #dc2020;
+            color: #F5F5F5;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nova Notificação!</h1>
+        </div>
+        <div class="content">
+            <p>Olá, {{username}}!</p>
+            <p>Você tem uma nova notificação no aplicativo:</p>
+            <p><strong>{{notificationMessage}}</strong></p>
+            <p>Para ver mais detalhes, clique no botão abaixo:</p>
+            <a href="https://my-finance-three.vercel.app/" class="button">Ver Notificação</a>
+        </div>
+        <div class="footer">
+            <p>Obrigado por usar nosso aplicativo!</p>
+        </div>
+    </div>
+</body>
+</html>

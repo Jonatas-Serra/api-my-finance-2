@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
-import { UsersModule } from './finances/users/users.module'
+import { UsersModule } from './users/users.module'
 import { AccountsModule } from './finances/accounts/accounts.module'
 import { AuthModule } from './auth/auth.module'
 import { WalletModule } from './finances/wallets/wallet.module'
 import { TransactionsModule } from './finances/transactions/transactions.module'
+import { NotificationModule } from './notification/notification.module'
+import { MailModule } from './mail/mail.module'
+import { TasksModule } from './task/task.module'
 import 'dotenv/config'
 
 @Module({
@@ -17,6 +20,9 @@ import 'dotenv/config'
     UsersModule,
     AuthModule,
     AccountsModule,
+    NotificationModule,
+    MailModule,
+    TasksModule,
   ],
   providers: [],
   controllers: [],
