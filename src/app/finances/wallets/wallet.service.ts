@@ -177,10 +177,6 @@ export class WalletService {
       return id.toString() === transactionIdStr
     })
 
-    if (transactionIndex === -1) {
-      throw new AppError('Transaction not found in wallet')
-    }
-
     wallet.transactions.splice(transactionIndex, 1)
     await wallet.save()
   }
