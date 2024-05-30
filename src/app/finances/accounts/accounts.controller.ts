@@ -13,6 +13,8 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiOperation,
+  ApiResponse,
 } from '@nestjs/swagger'
 import { AccountsService } from './accounts.service'
 import { CreateAccountDto } from './dto/create-account.dto'
@@ -32,7 +34,12 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
+  @ApiOperation({ summary: 'Create a new account' })
   @ApiBody({ type: CreateAccountDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The account has been successfully created.',
+  })
   create(@Body() createAccountDto: CreateAccountDto) {
     const createdBy = createAccountDto.createdBy
     if (createAccountDto.repeat) {
@@ -47,9 +54,14 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
+  @ApiOperation({ summary: 'Get an account by ID' })
   @ApiParam({
     name: 'id',
     description: 'ID of the account to retrieve',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The account has been successfully retrieved.',
   })
   findOne(@Param('id') id: string) {
     return this.accountsService.findOne(id)
@@ -57,9 +69,14 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('user/:creatorId')
+  @ApiOperation({ summary: 'Get all accounts for a user' })
   @ApiParam({
     name: 'creatorId',
     description: 'ID of the user to retrieve accounts for',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The accounts have been successfully retrieved.',
   })
   async findAll(@Param('creatorId') creatorId: string) {
     const accounts = await this.accountsService.findAll(creatorId)
@@ -74,11 +91,16 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an account' })
   @ApiParam({
     name: 'id',
     description: 'ID of the account to update',
   })
   @ApiBody({ type: UpdateAccountDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The account has been successfully updated.',
+  })
   update(
     @Param('id') id: string,
     @Body() updateAccountDto: UpdateAccountDto,
@@ -88,9 +110,14 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete an account' })
   @ApiParam({
     name: 'id',
     description: 'ID of the account to delete',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The account has been successfully deleted.',
   })
   remove(@Param('id') id: string) {
     return this.accountsService.remove(id)
@@ -98,10 +125,21 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/pay')
+  @ApiOperation({ summary: 'Pay an account' })
   @ApiParam({ name: 'id', description: 'ID of the account to pay' })
   @ApiBody({
     description: 'Wallet ID and payday information',
-    type: Object,
+    schema: {
+      type: 'object',
+      properties: {
+        walletId: { type: 'string' },
+        payday: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The account has been successfully paid.',
   })
   pay(@Param('id') id: string, @Body() requestBody: any) {
     const { walletId, payday } = requestBody
@@ -110,9 +148,15 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/underPay')
+  @ApiOperation({ summary: 'Mark an account as underpaid' })
   @ApiParam({
     name: 'id',
     description: 'ID of the account to mark as underpaid',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'The account has been successfully marked as underpaid.',
   })
   underPay(@Param('id') id: string) {
     return this.accountsService.underPaidAccounts(id)

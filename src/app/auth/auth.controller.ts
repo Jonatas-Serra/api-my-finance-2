@@ -5,7 +5,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common'
-import { UserLoginDto } from '../finances/users/dto/user-login.dto'
+import { UserLoginDto } from '../users/dto/user-login.dto'
 import {
   ApiTags,
   ApiBearerAuth,

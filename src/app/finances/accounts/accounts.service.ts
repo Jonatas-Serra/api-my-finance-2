@@ -70,6 +70,30 @@ export class AccountsService {
     return account
   }
 
+  async findUserById(createdBy: string) {
+    const account = await this.accountModel
+      .findOne({ createdBy })
+      .exec()
+    if (!account) {
+      throw new AppError('Account not found')
+    }
+
+    return account
+  }
+
+  async findDueAccounts() {
+    const currentDate = new Date()
+    const accounts = await this.accountModel
+      .find({ dueDate: { $lte: currentDate } })
+      .exec()
+
+    const accountsToNotify = accounts.filter(
+      (account) => account.status !== 'Paid',
+    )
+
+    return accountsToNotify
+  }
+
   async update(id: string, updateAccountDto: UpdateAccountDto) {
     const account = await this.accountModel.findById(id).exec()
     if (!account) {
