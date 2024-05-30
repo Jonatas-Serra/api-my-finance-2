@@ -17,19 +17,21 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger'
 
 @ApiTags('transactions')
+@ApiBearerAuth()
 @Controller('transactions')
 export class TransactionsController {
   constructor(
     private readonly transactionsService: TransactionService,
   ) {}
 
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post()
+  @ApiOperation({ summary: 'Create a new transaction' })
   @ApiBody({ type: CreateTransactionDto })
   @ApiResponse({
     status: 201,
@@ -39,9 +41,9 @@ export class TransactionsController {
     return this.transactionsService.create(createTransactionDto)
   }
 
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get(':creatorId')
+  @ApiOperation({ summary: 'Get all transactions for a user' })
   @ApiParam({
     name: 'creatorId',
     description: 'ID of the creator/user',
@@ -54,9 +56,9 @@ export class TransactionsController {
     return this.transactionsService.findAll(creatorId)
   }
 
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a transaction' })
   @ApiParam({
     name: 'id',
     description: 'ID of the transaction to update',
@@ -73,9 +75,9 @@ export class TransactionsController {
     return this.transactionsService.update(id, updateTransactionDto)
   }
 
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a transaction' })
   @ApiParam({
     name: 'id',
     description: 'ID of the transaction to delete',

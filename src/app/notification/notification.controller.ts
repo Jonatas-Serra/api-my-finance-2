@@ -9,7 +9,15 @@ import {
 } from '@nestjs/common'
 import { NotificationsService } from './notification.service'
 import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger'
 
+@ApiTags('notifications')
 @Controller('notifications')
 export class NotificationsController {
   constructor(
@@ -17,6 +25,25 @@ export class NotificationsController {
   ) {}
 
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new notification' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: 'userId123' },
+        message: {
+          type: 'string',
+          example: 'Mensager of the notification',
+        },
+        accountId: {
+          type: 'string',
+          example: 'accountId123',
+          nullable: true,
+        },
+      },
+    },
+  })
   @Post()
   create(
     @Body()
@@ -33,11 +60,17 @@ export class NotificationsController {
     )
   }
 
+  @ApiOperation({
+    summary: 'Get all notifications by user ID',
+  })
+  @ApiParam({ name: 'userId', description: 'User ID' })
   @Get(':userId')
   findAll(@Param('userId') userId: string) {
     return this.notificationsService.findAllByUserId(userId)
   }
 
+  @ApiOperation({ summary: 'Mark a notification as read' })
+  @ApiParam({ name: 'id', description: 'Notification ID' })
   @Patch(':id/read')
   markAsRead(@Param('id') id: string) {
     return this.notificationsService.markAsRead(id)
