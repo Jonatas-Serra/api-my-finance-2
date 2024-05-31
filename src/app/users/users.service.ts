@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { User, UserDocument } from './entities/user.entity'
@@ -14,8 +14,11 @@ import { AccountsService } from '../finances/accounts/accounts.service'
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
+    @Inject(forwardRef(() => TransactionService))
     private transactionService: TransactionService,
+    @Inject(forwardRef(() => AccountsService))
     private accountsService: AccountsService,
   ) {}
 
@@ -99,28 +102,14 @@ export class UsersService {
     return this.userModel.updateOne({ _id: id }, user).exec()
   }
 
-  async updatePassword(
+  public async updatePassword(
     userId: string,
-    oldPassword: string,
     newPassword: string,
-  ) {
-    const user = await this.userModel.findById(userId).exec()
-
-    if (!user) {
-      throw new AppError('User not found')
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      oldPassword,
-      user.password,
-    )
-
-    if (!isPasswordValid) {
-      throw new AppError('Invalid old password')
-    }
-
-    user.password = await this.hashPassword(newPassword)
-    return user.save()
+  ): Promise<void> {
+    const hashedPassword = await this.hashPassword(newPassword)
+    await this.userModel
+      .findByIdAndUpdate(userId, { password: hashedPassword })
+      .exec()
   }
 
   async remove(id: string) {

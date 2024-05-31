@@ -1,6 +1,6 @@
 import { UsersModule } from '../users/users.module'
 import { ConfigModule } from '@nestjs/config'
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
 import { PassportModule } from '@nestjs/passport'
@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt'
 import { LocalStrategy } from './strategies/local.strategy'
 import { UserStrategy } from './strategies/user.strategy'
 import { JwtStrategy } from './strategies/jwt.strategy'
+import { MailModule } from '../mail/mail.module'
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
+    forwardRef(() => MailModule),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, UserStrategy],
   controllers: [AuthController],

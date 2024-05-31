@@ -1,6 +1,7 @@
 import { User } from '../users/entities/user.entity'
 import { Injectable } from '@nestjs/common'
 import { UsersService } from '../users/users.service'
+import { MailService } from '../mail/mail.service'
 import * as bcrypt from 'bcrypt'
 import { JwtService } from '@nestjs/jwt'
 import AppError from 'src/shared/errors/AppError'
@@ -9,6 +10,7 @@ import AppError from 'src/shared/errors/AppError'
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -55,5 +57,41 @@ export class AuthService {
     } catch (error) {
       throw new AppError('Expired or invalid token')
     }
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.usersService.findOne(email)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const payload = { email: user.email.toString() }
+    const token = this.jwtService.sign(payload, { expiresIn: '1h' })
+
+    await this.mailService.sendPasswordResetToken(user.email, token)
+  }
+
+  async validatePasswordResetToken(token: string): Promise<boolean> {
+    try {
+      const decoded = this.jwtService.verify(token)
+      return !!decoded
+    } catch (e) {
+      return false
+    }
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    const decoded = this.jwtService.verify(token)
+    const user = await this.usersService.findOne(decoded.email)
+
+    console.log('newPassword', newPassword)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    await this.usersService.updatePassword(user._id, newPassword)
   }
 }

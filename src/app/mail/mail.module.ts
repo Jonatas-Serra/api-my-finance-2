@@ -1,5 +1,5 @@
 import { MailerModule } from '@nestjs-modules/mailer'
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { MailService } from './mail.service'
 import * as mailgunTransport from 'nodemailer-mailgun-transport'
 import { join } from 'path'
@@ -28,7 +28,7 @@ import { UsersModule } from '../users/users.module'
         },
       }),
     }),
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   providers: [MailService],
   exports: [MailService],

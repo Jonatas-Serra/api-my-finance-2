@@ -96,33 +96,6 @@ export class UsersController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/update-password')
-  @ApiOperation({ summary: 'Update user password' })
-  @ApiParam({
-    name: 'id',
-    description: 'ID of the user to update password',
-  })
-  @ApiBody({
-    description: 'Old and new password',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'The user password has been successfully updated.',
-  })
-  updatePassword(
-    @Param('id') id: string,
-    @Body()
-    updatePasswordDto: { oldPassword: string; newPassword: string },
-  ) {
-    return this.usersService.updatePassword(
-      id,
-      updatePasswordDto.oldPassword,
-      updatePasswordDto.newPassword,
-    )
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
   @ApiParam({
