@@ -58,6 +58,23 @@ export class NotificationsService {
     }
   }
 
+  async markAllAsRead(userId: string): Promise<Notification[]> {
+    try {
+      const notifications = await this.notificationModel
+        .find({ userId })
+        .exec()
+      notifications.forEach((notification) => {
+        notification.read = true
+      })
+      const savedNotifications = await Promise.all(
+        notifications.map((notification) => notification.save()),
+      )
+      return savedNotifications
+    } catch (error) {
+      throw error
+    }
+  }
+
   async findAllByUserId(userId: string): Promise<Notification[]> {
     try {
       return await this.notificationModel.find({ userId }).exec()

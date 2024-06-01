@@ -75,4 +75,11 @@ export class NotificationsController {
   markAsRead(@Param('id') id: string) {
     return this.notificationsService.markAsRead(id)
   }
+
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @Patch(':userId/read-all')
+  markAllAsRead(@Param('userId') userId: string) {
+    return this.notificationsService.markAllAsRead(userId)
+  }
 }
