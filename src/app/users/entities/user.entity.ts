@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
+import { CategoriesUtil } from 'src/config/categories.util'
 
 export type UserDocument = User & Document
 
@@ -36,6 +37,12 @@ export class User {
 
   @Prop()
   updatedAt: Date
+
+  @Prop({
+    type: [String],
+    default: CategoriesUtil.getDefaultCategories(),
+  })
+  categories: string[]
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

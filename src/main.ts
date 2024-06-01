@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core'
 import { Request, Response } from 'express'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { AppModule } from './app/app.module'
-
 import AppError from './shared/errors/AppError'
 
 async function bootstrap() {
@@ -29,6 +28,7 @@ async function bootstrap() {
           message: err.message,
         })
       }
+      _next()
     },
   )
   app.enableCors()
@@ -37,4 +37,5 @@ async function bootstrap() {
     console.log(`Server started on port ${PORT}`),
   )
 }
+
 bootstrap()

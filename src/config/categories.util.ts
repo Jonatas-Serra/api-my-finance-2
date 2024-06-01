@@ -1,9 +1,15 @@
 export class CategoriesUtil {
   static defaultCategories = [
     'Alimentação',
+    'Moradia',
     'Transporte',
+    'Saúde',
+    'Educação',
     'Lazer',
-    'Outros',
+    'Vestuário',
+    'Despesas Pessoais',
+    'Finanças',
+    'Pet',
   ]
 
   static getDefaultCategories(): string[] {
