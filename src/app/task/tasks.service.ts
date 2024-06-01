@@ -14,7 +14,7 @@ export class TasksService {
     private readonly mailService: MailService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_8AM)
+  @Cron(CronExpression.EVERY_DAY_AT_7AM)
   async handleCron() {
     try {
       const accounts = await this.accountsService.findDueAccounts()
@@ -51,8 +51,12 @@ export class TasksService {
 
           await this.mailService.sendAccountDueNotification(
             user.email,
-            `Sua conta no valor ${new Intl.NumberFormat('pt-BR', {
-              style: 'currency',
+            `${
+              account.type === 'payable'
+                ? 'Lembre-se, você tem uma conta a pagar de '
+                : 'Você tem uma conta a receber de '
+            }
+            ${new Intl.NumberFormat('pt-BR', {
               currency: 'BRL',
             }).format(
               account.value,
