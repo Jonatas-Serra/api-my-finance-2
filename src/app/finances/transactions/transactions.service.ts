@@ -1,221 +1,219 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common'
-import { InjectModel } from '@nestjs/mongoose'
-import { Model } from 'mongoose'
-import {
-  Transaction,
-  TransactionDocument,
-} from './entities/transaction.entity'
-import {
-  Wallet,
-  WalletDocument,
-} from '../wallets/entities/wallet.entity'
-import { CreateTransactionDto } from './dto/create-transaction.dto'
-import { UpdateTransactionDto } from './dto/update-transaction.dto'
-import AppError from 'src/shared/errors/AppError'
-import { WalletService } from '../wallets/wallet.service'
-import { AccountsService } from '../accounts/accounts.service'
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { TransactionService } from '../transactions/transactions.service';
+import { Account, AccountDocument } from './entities/account.entity';
+import { CreateAccountDto } from './dto/create-account.dto';
+import { UpdateAccountDto } from './dto/update-account.dto';
+import AppError from '../../../shared/errors/AppError';
 
 @Injectable()
-export class TransactionService {
+export class AccountsService {
   constructor(
-    @InjectModel(Transaction.name)
-    private transactionModel: Model<TransactionDocument>,
-    @InjectModel(Wallet.name)
-    private walletModel: Model<WalletDocument>,
-    @Inject(forwardRef(() => WalletService))
-    private walletService: WalletService,
-    @Inject(forwardRef(() => AccountsService))
-    private accountsService: AccountsService,
+    @InjectModel(Account.name)
+    private accountModel: Model<AccountDocument>,
+    @Inject(forwardRef(() => TransactionService))
+    private transactionService: TransactionService,
   ) {}
 
-  async create(createTransactionDto: CreateTransactionDto) {
-    const createdTransaction = new this.transactionModel(
-      createTransactionDto,
-    )
-    const savedTransaction = await createdTransaction.save()
+  async create(createAccountDto: CreateAccountDto, createdBy: string) {
+    createAccountDto.status = this.definedAccountStatus(createAccountDto.dueDate);
 
-    if (createTransactionDto.walletId) {
-      await this.updateWalletTransactions(
-        createTransactionDto.walletId,
-        savedTransaction._id,
-      )
+    const createdAccount = new this.accountModel({
+      ...createAccountDto,
+      createdBy,
+    });
+
+    return createdAccount.save();
+  }
+
+  async createRecurringAccounts(createAccountDto: CreateAccountDto, createdBy: string) {
+    const { repeat } = createAccountDto;
+    const recurringAccounts = [];
+
+    for (let i = 0; i <= repeat; i++) {
+      const newAccount = new this.accountModel({
+        ...createAccountDto,
+        createdBy,
+        dueDate: this.calculateNextDueDate(createAccountDto, i),
+      });
+
+      newAccount._id = newAccount.id;
+      recurringAccounts.push(newAccount);
     }
 
-    await this.updateWalletBalance(createTransactionDto.walletId)
-
-    return savedTransaction
+    return this.accountModel.insertMany(recurringAccounts);
   }
 
-  async findAllByWalletId(walletId: string) {
-    return this.transactionModel.find({ walletId }).lean().exec()
-  }
+  private calculateNextDueDate(account: CreateAccountDto, repeatIndex: number): Date {
+    const { dueDate } = account;
+    const nextDueDate = new Date(dueDate);
+    nextDueDate.setFullYear(new Date().getFullYear()); // Mantém o mesmo ano
 
-  async findAllByAccountId(accountId: string) {
-    return this.transactionModel.find({ accountId }).lean().exec()
-  }
-
-  async findAllTransactions() {
-    return this.transactionModel.find().exec()
-  }
-
-  async findOne(id: string) {
-    const transaction = await this.transactionModel
-      .findById(id)
-      .exec()
-    if (!transaction) {
-      throw new AppError('Transaction not found')
-    }
-    return transaction
-  }
-
-  async update(
-    id: string,
-    updateTransactionDto: UpdateTransactionDto,
-  ) {
-    const transaction = await this.transactionModel
-      .findByIdAndUpdate(id, updateTransactionDto, { new: true })
-      .exec()
-    if (!transaction) {
-      throw new AppError('Transaction not found')
-    }
-    await this.updateWalletBalance(transaction.walletId)
-    return transaction
-  }
-
-  async reverseTransferTransaction(transactionId: string) {
-    const transaction = await this.findOne(transactionId)
-
-    const sourceWalletId = transaction.sourceWalletId
-    const targetWalletId = transaction.targetWalletId
-
-    await this.walletModel.updateOne(
-      { _id: sourceWalletId },
-      { $inc: { balance: transaction.amount } },
-    )
-
-    await this.walletModel.updateOne(
-      { _id: targetWalletId },
-      { $inc: { balance: -transaction.amount } },
-    )
-
-    return transaction
-  }
-
-  async remove(id: string, preventRecursiveCall = false) {
-    const transaction = await this.transactionModel
-      .findById(id)
-      .exec()
-
-    if (!transaction) {
-      throw new AppError('Transaction not found')
-    }
-
-    if (transaction.sourceWalletId) {
-      await this.reverseTransferTransaction(transaction.id)
-    } else if (transaction.walletId) {
-      await this.walletService.removeTransactionFromWallet(
-        transaction.walletId,
-        transaction._id,
-      )
-    }
-
-    if (transaction.accountId && !preventRecursiveCall) {
-      await this.accountsService.underPaidAccounts(
-        transaction.accountId,
-        true,
-      )
-    }
-
-    await this.transactionModel.findByIdAndDelete(id).exec()
-
-    if (transaction.walletId) {
-      await this.updateWalletBalance(transaction.walletId)
-    }
-
-    return transaction
-  }
-
-  async removeByWalletId(walletId: string) {
-    await this.transactionModel.deleteMany({ walletId }).exec()
-  }
-
-  async removeByAccountId(accountId: string) {
-    await this.transactionModel.deleteMany({ accountId }).exec()
-  }
-
-  async removeByUserId(userId: string) {
-    const wallets = await this.walletModel
-      .find({ createdBy: userId })
-      .exec()
-    const walletIds = wallets.map((wallet) => wallet._id)
-    await this.transactionModel
-      .deleteMany({ walletId: { $in: walletIds } })
-      .exec()
-  }
-
-  private async updateWalletTransactions(
-    walletId: string,
-    transactionId: string,
-  ) {
-    const wallet = await this.walletModel.findById(walletId).exec()
-    if (!wallet) {
-      throw new AppError('Wallet not found')
-    }
-    const transaction = await this.transactionModel
-      .findById(transactionId)
-      .exec()
-    if (!transaction) {
-      throw new AppError('Transaction not found')
-    }
-    wallet.transactions.push(transaction._id)
-    await wallet.save()
+    return nextDueDate;
   }
 
   async findAll(creatorId: string) {
-    return this.transactionModel.find({ createdBy: creatorId }).exec()
+    const allAccounts = await this.accountModel.find({ createdBy: creatorId }).lean().exec();
+    const expandedAccounts = this.expandRepeatingAccounts(allAccounts);
+    return expandedAccounts;
   }
 
-  private async calculateWalletBalance(
-    walletId: string,
-  ): Promise<number> {
-    const wallet = await this.walletModel.findById(walletId).exec()
-    if (!wallet) {
-      throw new AppError('Wallet not found')
+  async findOne(id: string) {
+    const account = await this.accountModel.findById(id).exec();
+    if (!account) {
+      throw new AppError('Account not found');
+    }
+    return account;
+  }
+
+  async update(id: string, updateAccountDto: UpdateAccountDto) {
+    const account = await this.accountModel.findById(id).exec();
+    if (!account) {
+      throw new AppError('Account not found');
     }
 
-    const transactions = await this.transactionModel
-      .find({ walletId })
-      .lean()
-      .exec()
+    if (account.status === 'Paid') {
+      throw new AppError('Account already paid');
+    } else {
+      updateAccountDto.status = this.definedAccountStatus(updateAccountDto.dueDate);
+    }
 
-    let balance = wallet.initialBalance
+    const updatedAccount = await this.accountModel.findByIdAndUpdate(id, updateAccountDto, { new: true });
 
-    transactions.forEach((transaction) => {
-      if (
-        transaction.type === 'Deposit' ||
-        transaction.type === 'Transfer'
-      ) {
-        balance += transaction.amount
-      } else if (transaction.type === 'Withdrawal') {
-        balance -= transaction.amount
+    return updatedAccount;
+  }
+
+  async remove(id: string) {
+    const account = await this.accountModel.findByIdAndDelete(id).exec();
+
+    if (!account) {
+      throw new AppError('Account not found');
+    }
+
+    if (account.status === 'Paid') {
+      await this.transactionService.removeByAccountId(account._id);
+    }
+
+    return account;
+  }
+
+  async removeByUserId(userId: string) {
+    const accounts = await this.accountModel.find({ createdBy: userId }).exec();
+
+    for (const account of accounts) {
+      if (account.isPaid && account.transactionId) {
+        await this.transactionService.remove(account.transactionId);
       }
-    })
 
-    return balance
+      await this.accountModel.findByIdAndDelete(account._id).exec();
+    }
   }
 
-  private async setWalletBalance(walletId: string, balance: number) {
-    const wallet = await this.walletModel.findById(walletId).exec()
-    if (!wallet) {
-      throw new AppError('Wallet not found')
+  async pay(id: string, walletId: string, payday: Date) {
+    const account = await this.accountModel.findById(id).exec();
+    const paydayDate = new Date(payday);
+
+    if (!account) {
+      throw new AppError('Account not found');
     }
 
-    wallet.balance = balance
-    await wallet.save()
+    if (account.isPaid) {
+      throw new AppError('Account already paid');
+    }
+
+    account.isPaid = true;
+    account.status = 'Paid';
+    account.payday = paydayDate;
+    const updatedAccount = await account.save();
+
+    await this.transactionService.create({
+      walletId: walletId,
+      amount: updatedAccount.value,
+      type: updatedAccount.type === 'receivable' ? 'Deposit' : 'Withdrawal',
+      date: updatedAccount.payday,
+      accountId: account._id,
+      description: updatedAccount.payeeOrPayer,
+      category: updatedAccount.category,
+      createdBy: updatedAccount.createdBy,
+      sourceWalletId: '',
+      targetWalletId: '',
+    });
+
+    return updatedAccount;
   }
 
-  async updateWalletBalance(walletId: string) {
-    const balance = await this.calculateWalletBalance(walletId)
-    await this.setWalletBalance(walletId, balance)
+  async underPaidAccounts(id: string) {
+    const account = await this.accountModel.findById(id).exec();
+    const transaction = await this.transactionService.findAllByAccountId(id);
+
+    if (!account) {
+      throw new AppError('Account not found');
+    }
+
+    if (!transaction || transaction.length === 0) {
+      throw new AppError('Transaction not found');
+    }
+
+    await this.transactionService.remove(transaction[0]._id);
+
+    account.isPaid = false;
+    account.status = account.dueDate < new Date() ? 'Late' : 'Pending';
+
+    return account.save();
+  }
+
+  private expandRepeatingAccounts(accounts: Account[]) {
+    const expandedAccounts: Account[] = [];
+
+    accounts.forEach((account) => {
+      if (account.repeat) {
+        const repeatCount = account.repeat || 1;
+        for (let i = 1; i <= repeatCount; i++) {
+          const expandedAccount: Account = {
+            ...account,
+            dueDate: this.calculateNextDueDate(account, i),
+          };
+          expandedAccounts.push(expandedAccount);
+        }
+      } else {
+        expandedAccounts.push(account);
+      }
+    });
+
+    return expandedAccounts;
+  }
+
+  async updateAccountStatus() {
+    const currentDate = new Date();
+    const accounts = await this.accountModel.find().exec();
+
+    for (const account of accounts) {
+      if (account.status !== 'Paid') {
+        const dueDate = new Date(account.dueDate);
+        if (dueDate < currentDate) {
+          account.status = 'Late';
+        } else {
+          account.status = 'Pending';
+        }
+        await account.save();
+      }
+    }
+  }
+
+  private definedAccountStatus(dueDate: Date) {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    const dueDateWithoutTime = new Date(dueDate);
+    dueDateWithoutTime.setHours(0, 0, 0, 0);
+
+    if (dueDateWithoutTime > currentDate) {
+      return 'Pending';
+    } else if (dueDateWithoutTime < currentDate) {
+      return 'Late';
+    } else {
+      return 'Pending';
+    }
   }
 }
