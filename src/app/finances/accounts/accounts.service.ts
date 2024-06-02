@@ -6,6 +6,7 @@ import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
 import AppError from '../../../shared/errors/AppError'
+import { addMonths, format, parseISO } from 'date-fns'
 
 @Injectable()
 export class AccountsService {
@@ -21,11 +22,13 @@ export class AccountsService {
     createdBy: string,
   ) {
     createAccountDto.status = this.definedAccountStatus(
-      createAccountDto.dueDate,
+      parseISO(createAccountDto.dueDate),
     )
 
     const createdAccount = new this.accountModel({
       ...createAccountDto,
+      dueDate: parseISO(createAccountDto.dueDate),
+      issueDate: parseISO(createAccountDto.issueDate),
       createdBy,
     })
 
@@ -39,13 +42,17 @@ export class AccountsService {
     const { repeat } = createAccountDto
     const recurringAccounts = []
 
-    for (let i = 1; i <= repeat; i++) {
+    for (let i = 0; i < repeat; i++) {
+      const nextDueDate = this.calculateNextDueDate(
+        parseISO(createAccountDto.dueDate),
+        i,
+      )
+
       const newAccount = new this.accountModel({
         ...createAccountDto,
         createdBy,
-        dueDate: this.calculateNextDueDate(createAccountDto, i),
+        dueDate: nextDueDate,
       })
-
       newAccount._id = newAccount.id
       recurringAccounts.push(newAccount)
     }
@@ -53,13 +60,8 @@ export class AccountsService {
     return this.accountModel.insertMany(recurringAccounts)
   }
 
-  async findAll(creatorId: string) {
-    const allAccounts = await this.accountModel
-      .find({ createdBy: creatorId })
-      .lean()
-      .exec()
-    const expandedAccounts = this.expandRepeatingAccounts(allAccounts)
-    return expandedAccounts
+  async findAll(creatorId: string): Promise<Account[]> {
+    return this.accountModel.find({ createdBy: creatorId }).exec()
   }
 
   async findOne(id: string) {
@@ -104,7 +106,7 @@ export class AccountsService {
       throw new AppError('Account already paid')
     } else {
       updateAccountDto.status = this.definedAccountStatus(
-        updateAccountDto.dueDate,
+        parseISO(updateAccountDto.dueDate),
       )
     }
 
@@ -207,21 +209,27 @@ export class AccountsService {
     return account.save()
   }
 
-  private expandRepeatingAccounts(accounts: Account[]) {
-    const expandedAccounts: Account[] = []
+  private expandRepeatingAccounts(
+    accounts: AccountDocument[],
+  ): AccountDocument[] {
+    const expandedAccounts = []
 
     accounts.forEach((account) => {
+      expandedAccounts.push(account)
+
       if (account.repeat) {
-        const repeatCount = account.repeat || 1
-        for (let i = 1; i <= repeatCount; i++) {
-          const expandedAccount: Account = {
-            ...account,
-            dueDate: this.calculateNextDueDate(account, i),
+        for (let i = 1; i <= account.repeat; i++) {
+          const nextDueDate = this.calculateNextDueDate(
+            account.dueDate,
+            i,
+          )
+          const newAccount = {
+            ...account.toObject(),
+            _id: undefined,
+            dueDate: nextDueDate,
           }
-          expandedAccounts.push(expandedAccount)
+          expandedAccounts.push(newAccount)
         }
-      } else {
-        expandedAccounts.push(account)
       }
     })
 
@@ -229,47 +237,19 @@ export class AccountsService {
   }
 
   private calculateNextDueDate(
-    account: CreateAccountDto,
+    originalDate: Date,
     repeatIndex: number,
-  ) {
-    const { repeatInterval, dueDate } = account
-    const newDueDate = new Date(dueDate)
-    newDueDate.setMonth(
-      newDueDate.getMonth() + repeatIndex * repeatInterval,
-    )
-    return newDueDate
-  }
+  ): Date {
+    const newDate = addMonths(originalDate, repeatIndex)
 
-  async updateAccountStatus() {
-    const currentDate = new Date()
-    const accounts = await this.accountModel.find().exec()
-
-    for (const account of accounts) {
-      if (account.status !== 'Paid') {
-        const dueDate = new Date(account.dueDate)
-        if (dueDate < currentDate) {
-          account.status = 'Late'
-        } else {
-          account.status = 'Pending'
-        }
-        await account.save()
-      }
-    }
+    return newDate
   }
 
   private definedAccountStatus(dueDate: Date) {
-    const currentDate = new Date()
-    currentDate.setHours(0, 0, 0, 0)
-
-    const dueDateWithoutTime = new Date(dueDate)
-    dueDateWithoutTime.setHours(0, 0, 0, 0)
-
-    if (dueDateWithoutTime > currentDate) {
-      return 'Pending'
-    } else if (dueDateWithoutTime < currentDate) {
+    const today = new Date()
+    if (today > dueDate) {
       return 'Late'
-    } else {
-      return 'Pending'
     }
+    return 'Pending'
   }
 }

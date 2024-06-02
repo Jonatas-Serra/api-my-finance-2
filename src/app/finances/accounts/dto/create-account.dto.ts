@@ -6,6 +6,7 @@ import {
   IsString,
   IsOptional,
   IsNotEmpty,
+  IsDateString,
 } from 'class-validator'
 
 export class CreateAccountDto {
@@ -29,15 +30,15 @@ export class CreateAccountDto {
     description: 'Due date of the account.',
   })
   @IsNotEmpty()
-  @IsString()
-  dueDate: Date
+  @IsDateString()
+  dueDate: string
 
   @ApiProperty({
     description: 'Issue date of the account.',
   })
   @IsNotEmpty()
-  @IsString()
-  issueDate: Date
+  @IsDateString()
+  issueDate: string
 
   @ApiProperty({
     description: 'Document number of the account.',

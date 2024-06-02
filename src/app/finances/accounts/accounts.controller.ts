@@ -23,7 +23,7 @@ import { Account } from './entities/account.entity'
 import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
 
 interface AccountWithId extends Account {
-  _id: any
+  _id: string
 }
 
 @ApiTags('accounts')
@@ -40,7 +40,7 @@ export class AccountsController {
     status: 201,
     description: 'The account has been successfully created.',
   })
-  create(@Body() createAccountDto: CreateAccountDto) {
+  async create(@Body() createAccountDto: CreateAccountDto) {
     const createdBy = createAccountDto.createdBy
     if (createAccountDto.repeat) {
       return this.accountsService.createRecurringAccounts(
@@ -63,7 +63,7 @@ export class AccountsController {
     status: 200,
     description: 'The account has been successfully retrieved.',
   })
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.accountsService.findOne(id)
   }
 
@@ -81,10 +81,15 @@ export class AccountsController {
   async findAll(@Param('creatorId') creatorId: string) {
     const accounts = await this.accountsService.findAll(creatorId)
     const uniqueAccounts: Record<string, AccountWithId> = {}
-    accounts.forEach((account: AccountWithId) => {
-      const { _id, ...rest } = account
-      uniqueAccounts[_id] = { _id, ...rest }
+
+    accounts.forEach((account: any) => {
+      const { _id, ...rest } = account._doc // Use _doc para acessar os dados brutos do Mongoose
+      uniqueAccounts[_id] = {
+        _id: _id.toString(),
+        ...rest,
+      } as AccountWithId
     })
+
     const simplifiedAccounts = Object.values(uniqueAccounts)
     return simplifiedAccounts
   }
@@ -101,7 +106,7 @@ export class AccountsController {
     status: 200,
     description: 'The account has been successfully updated.',
   })
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateAccountDto: UpdateAccountDto,
   ) {
@@ -119,7 +124,7 @@ export class AccountsController {
     status: 200,
     description: 'The account has been successfully deleted.',
   })
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
     return this.accountsService.remove(id)
   }
 
@@ -141,9 +146,9 @@ export class AccountsController {
     status: 200,
     description: 'The account has been successfully paid.',
   })
-  pay(@Param('id') id: string, @Body() requestBody: any) {
+  async pay(@Param('id') id: string, @Body() requestBody: any) {
     const { walletId, payday } = requestBody
-    return this.accountsService.pay(id, walletId, payday)
+    return this.accountsService.pay(id, walletId, new Date(payday))
   }
 
   @UseGuards(JwtAuthGuard)
@@ -158,7 +163,7 @@ export class AccountsController {
     description:
       'The account has been successfully marked as underpaid.',
   })
-  underPay(@Param('id') id: string) {
+  async underPay(@Param('id') id: string) {
     return this.accountsService.underPaidAccounts(id)
   }
 }

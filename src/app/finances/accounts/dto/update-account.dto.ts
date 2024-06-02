@@ -36,14 +36,14 @@ export class UpdateAccountDto {
   })
   @IsOptional()
   @IsString()
-  dueDate: Date
+  dueDate: string
 
   @ApiProperty({
     description: 'Issue date of the account.',
   })
   @IsOptional()
   @IsString()
-  issueDate: Date
+  issueDate: string
 
   @ApiProperty({
     description: 'Document number of the account.',

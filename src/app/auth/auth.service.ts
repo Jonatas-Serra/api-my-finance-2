@@ -87,7 +87,6 @@ export class AuthService {
     const decoded = this.jwtService.verify(token)
     const user = await this.usersService.findOne(decoded.email)
 
-    console.log('newPassword', newPassword)
     if (!user) {
       throw new Error('User not found')
     }
