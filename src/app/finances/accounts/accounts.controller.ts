@@ -83,7 +83,7 @@ export class AccountsController {
     const uniqueAccounts: Record<string, AccountWithId> = {}
 
     accounts.forEach((account: any) => {
-      const { _id, ...rest } = account._doc // Use _doc para acessar os dados brutos do Mongoose
+      const { _id, ...rest } = account._doc
       uniqueAccounts[_id] = {
         _id: _id.toString(),
         ...rest,

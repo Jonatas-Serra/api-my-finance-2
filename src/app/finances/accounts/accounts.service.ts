@@ -47,11 +47,13 @@ export class AccountsService {
         parseISO(createAccountDto.dueDate),
         i,
       )
+      const status = this.definedAccountStatus(nextDueDate)
 
       const newAccount = new this.accountModel({
         ...createAccountDto,
         createdBy,
         dueDate: nextDueDate,
+        status,
       })
       newAccount._id = newAccount.id
       recurringAccounts.push(newAccount)
@@ -210,6 +212,7 @@ export class AccountsService {
   }
 
   public async updateAccountStatus() {
+    console.log('Updating account status')
     const accounts = await this.accountModel.find().exec()
 
     for (const account of accounts) {
@@ -236,6 +239,7 @@ export class AccountsService {
             ...account.toObject(),
             _id: undefined,
             dueDate: nextDueDate,
+            status: this.definedAccountStatus(nextDueDate),
           }
           expandedAccounts.push(newAccount)
         }
@@ -249,12 +253,10 @@ export class AccountsService {
     originalDate: Date,
     repeatIndex: number,
   ): Date {
-    const newDate = addMonths(originalDate, repeatIndex)
-
-    return newDate
+    return addMonths(originalDate, repeatIndex)
   }
 
-  private definedAccountStatus(dueDate: Date) {
+  private definedAccountStatus(dueDate: Date): string {
     const today = new Date()
     if (today > dueDate) {
       return 'Late'
