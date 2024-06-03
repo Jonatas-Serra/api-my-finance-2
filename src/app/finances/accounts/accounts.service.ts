@@ -6,7 +6,7 @@ import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
 import AppError from '../../../shared/errors/AppError'
-import { addMonths, format, parseISO } from 'date-fns'
+import { addMonths, parseISO } from 'date-fns'
 
 @Injectable()
 export class AccountsService {
@@ -207,6 +207,15 @@ export class AccountsService {
     account.status = account.dueDate < new Date() ? 'Late' : 'Pending'
 
     return account.save()
+  }
+
+  public async updateAccountStatus() {
+    const accounts = await this.accountModel.find().exec()
+
+    for (const account of accounts) {
+      account.status = this.definedAccountStatus(account.dueDate)
+      await account.save()
+    }
   }
 
   private expandRepeatingAccounts(
