@@ -9,6 +9,8 @@ export type TransactionDocument = Transaction & Document
   versionKey: false,
 })
 export class Transaction {
+  _id: string
+
   @Prop({
     required: true,
     enum: ['Deposit', 'Withdrawal', 'Transfer'],

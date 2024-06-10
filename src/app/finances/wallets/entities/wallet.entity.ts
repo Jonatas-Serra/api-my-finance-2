@@ -1,48 +1,30 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Document, Schema as MongooseSchema } from 'mongoose'
-import { Transaction } from '../../transactions/entities/transaction.entity'
+import { Document, Types } from 'mongoose'
 
 export type WalletDocument = Wallet & Document
 
-@Schema({ autoIndex: true })
+@Schema({
+  autoIndex: true,
+  toJSON: { virtuals: true },
+  versionKey: false,
+})
 export class Wallet {
-  @Prop({ required: true })
-  createdBy: string
+  _id: Types.ObjectId
 
   @Prop({ required: true })
   name: string
 
   @Prop({ required: true })
-  initialBalance: number
-
-  @Prop({ required: true })
   balance: number
 
-  @Prop()
-  currency: string
+  @Prop({ type: [Types.ObjectId], ref: 'Transaction' })
+  transactions: Types.ObjectId[]
 
-  @Prop({
-    type: [
-      { type: MongooseSchema.Types.ObjectId, ref: 'Transaction' },
-    ],
-    default: [],
-  })
-  transactions: MongooseSchema.Types.ObjectId[]
+  @Prop({ required: true })
+  createdBy: string
 
-  @Prop({ default: Date.now })
-  createdAt: Date
-
-  @Prop()
-  updatedAt: Date
+  @Prop({ default: 0 })
+  initialBalance: number
 }
 
 export const WalletSchema = SchemaFactory.createForClass(Wallet)
-
-WalletSchema.pre<WalletDocument>('save', function (next) {
-  const now = new Date()
-  this.updatedAt = now
-  if (!this.createdAt) {
-    this.createdAt = now
-  }
-  next()
-})

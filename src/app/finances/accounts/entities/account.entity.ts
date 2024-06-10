@@ -9,7 +9,8 @@ export type AccountDocument = Account & Document
   versionKey: false,
 })
 export class Account {
-  [x: string]: any
+  _id: string
+
   @Prop({ required: true, enum: ['receivable', 'payable'] })
   type: string
 

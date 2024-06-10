@@ -143,8 +143,8 @@ export class AccountsService {
       .exec()
 
     for (const account of accounts) {
-      if (account.isPaid && account.transactionId) {
-        await this.transactionService.remove(account.transactionId)
+      if (account.isPaid && account._id) {
+        await this.transactionService.remove(account._id)
       }
 
       await this.accountModel.findByIdAndDelete(account._id).exec()

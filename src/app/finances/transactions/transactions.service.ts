@@ -1,6 +1,6 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { Model } from 'mongoose'
+import { Model, Types } from 'mongoose'
 import {
   Transaction,
   TransactionDocument,
@@ -155,19 +155,21 @@ export class TransactionService {
 
   private async updateWalletTransactions(
     walletId: string,
-    transactionId: string,
+    _id: string,
   ) {
     const wallet = await this.walletModel.findById(walletId).exec()
     if (!wallet) {
       throw new AppError('Wallet not found')
     }
+
     const transaction = await this.transactionModel
-      .findById(transactionId)
+      .findById(_id)
       .exec()
     if (!transaction) {
       throw new AppError('Transaction not found')
     }
-    wallet.transactions.push(transaction._id)
+
+    wallet.transactions.push(new Types.ObjectId(transaction._id))
     await wallet.save()
   }
 
