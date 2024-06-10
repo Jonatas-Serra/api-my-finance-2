@@ -6,7 +6,7 @@ export class CategoriesUtil {
     'Saúde',
     'Educação',
     'Lazer',
-    'Vestuário',
+    'Renda Extra',
     'Despesas Pessoais',
     'Finanças',
     'Pet',

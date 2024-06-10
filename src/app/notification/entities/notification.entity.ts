@@ -2,8 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import { ApiProperty } from '@nestjs/swagger'
 
+export type NotificationDocument = Notification & Document
+
 @Schema()
-export class Notification extends Document {
+export class Notification {
   @ApiProperty({ example: 'userId123', description: 'User ID' })
   @Prop({ required: true })
   userId: string
@@ -41,6 +43,15 @@ export class Notification extends Document {
   })
   @Prop({ default: Date.now })
   createdAt: Date
+
+  constructor(notification?: Partial<Notification>) {
+    this.userId = notification?.userId
+    this.message = notification?.message
+    this.read = notification?.read
+    this.accountId = notification?.accountId
+    this.readAt = notification?.readAt
+    this.createdAt = notification?.createdAt
+  }
 }
 
 export const NotificationSchema =

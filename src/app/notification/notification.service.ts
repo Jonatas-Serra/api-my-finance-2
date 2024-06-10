@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { Notification } from './entities/notification.entity'
+import {
+  Notification,
+  NotificationDocument,
+} from './entities/notification.entity'
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectModel(Notification.name)
-    private readonly notificationModel: Model<Notification>,
+    private readonly notificationModel: Model<NotificationDocument>,
   ) {}
 
   async create(
@@ -22,9 +25,7 @@ export class NotificationsService {
         accountId,
         read: false,
       })
-      const savedNotification = await notification.save()
-
-      return savedNotification
+      return await notification.save()
     } catch (error) {
       throw error
     }
@@ -42,17 +43,16 @@ export class NotificationsService {
     }
   }
 
-  async markAsRead(id: string): Promise<Notification> {
+  async markAsRead(_id: string): Promise<Notification> {
     try {
       const notification = await this.notificationModel
-        .findById(id)
+        .findById(_id)
         .exec()
       if (!notification) {
         throw new Error('Notification not found')
       }
       notification.read = true
-      const savedNotification = await notification.save()
-      return savedNotification
+      return await notification.save()
     } catch (error) {
       throw error
     }
@@ -66,10 +66,9 @@ export class NotificationsService {
       notifications.forEach((notification) => {
         notification.read = true
       })
-      const savedNotifications = await Promise.all(
+      return await Promise.all(
         notifications.map((notification) => notification.save()),
       )
-      return savedNotifications
     } catch (error) {
       throw error
     }
