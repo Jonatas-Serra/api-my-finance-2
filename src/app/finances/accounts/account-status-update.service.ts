@@ -6,7 +6,7 @@ import { AccountsService } from './accounts.service'
 export class AccountStatusUpdateService {
   constructor(private readonly accountsService: AccountsService) {}
 
-  @Cron('12 22 * * *')
+  @Cron('0 1 * * *')
   async handleCron() {
     await this.accountsService.updateAccountStatus()
   }
