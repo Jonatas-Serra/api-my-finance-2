@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { Model } from 'mongoose'
+import { Model, Types } from 'mongoose'
 import { TransactionService } from '../transactions/transactions.service'
 import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
@@ -12,9 +12,9 @@ import { addMonths, parseISO } from 'date-fns'
 export class AccountsService {
   constructor(
     @InjectModel(Account.name)
-    private accountModel: Model<AccountDocument>,
+    private readonly accountModel: Model<AccountDocument>,
     @Inject(forwardRef(() => TransactionService))
-    private transactionService: TransactionService,
+    private readonly transactionService: TransactionService,
   ) {}
 
   async create(
@@ -32,7 +32,7 @@ export class AccountsService {
       createdBy,
     })
 
-    return createdAccount.save()
+    return await createdAccount.save()
   }
 
   async createRecurringAccounts(
@@ -66,8 +66,8 @@ export class AccountsService {
     return this.accountModel.find({ createdBy: creatorId }).exec()
   }
 
-  async findOne(id: string) {
-    const account = await this.accountModel.findById(id).exec()
+  async findOne(_id: string) {
+    const account = await this.accountModel.findById(_id).exec()
     if (!account) {
       throw new AppError('Account not found')
     }
@@ -131,7 +131,9 @@ export class AccountsService {
     }
 
     if (account.status === 'Paid') {
-      await this.transactionService.removeByAccountId(account._id)
+      await this.transactionService.removeByAccountId(
+        account._id.toString(),
+      )
     }
 
     return account
@@ -144,7 +146,9 @@ export class AccountsService {
 
     for (const account of accounts) {
       if (account.isPaid && account._id) {
-        await this.transactionService.remove(account._id)
+        await this.transactionService.removeByAccountId(
+          account._id.toString(),
+        )
       }
 
       await this.accountModel.findByIdAndDelete(account._id).exec()
@@ -189,19 +193,19 @@ export class AccountsService {
 
   async underPaidAccounts(id: string, preventRecursiveCall = false) {
     const account = await this.accountModel.findById(id).exec()
-    const transaction =
+    const transactions =
       await this.transactionService.findAllByAccountId(id)
 
     if (!account) {
       throw new AppError('Account not found')
     }
 
-    if (!transaction || transaction.length === 0) {
+    if (!transactions || transactions.length === 0) {
       throw new AppError('Transaction not found')
     }
 
     await this.transactionService.remove(
-      transaction[0]._id,
+      transactions[0]._id,
       preventRecursiveCall,
     )
 
@@ -216,7 +220,11 @@ export class AccountsService {
     const accounts = await this.accountModel.find().exec()
 
     for (const account of accounts) {
-      account.status = this.definedAccountStatus(account.dueDate)
+      if (account.isPaid && account.status !== 'Paid') {
+        account.status = 'Paid'
+      } else if (!account.isPaid) {
+        account.status = this.definedAccountStatus(account.dueDate)
+      }
       await account.save()
     }
   }

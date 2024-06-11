@@ -28,48 +28,59 @@ export class TasksService {
             await this.notificationsService.findByAccountId(
               account._id,
             )
-          if (existingNotification) {
-            continue
+
+          if (existingNotification && !account.isPaid) {
+            await this.notificationsService.remove(
+              existingNotification._id,
+            )
           }
 
-          await this.notificationsService.create(
-            account.createdBy,
-            `${
-              account.type === 'payable'
-                ? 'Lembre-se, você tem uma conta a pagar de '
-                : 'Você tem uma conta a receber de '
-            }
-            ${new Intl.NumberFormat('pt-BR', {
-              currency: 'BRL',
-            }).format(
-              account.value,
-            )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
-              timeZone: 'UTC',
-            }).format(new Date(account.dueDate))}`,
-            account._id.toString(),
-          )
+          if (!account.isPaid) {
+            await this.notificationsService.create(
+              account.createdBy,
+              `${
+                account.type === 'payable'
+                  ? 'Lembre-se, você tem uma conta a pagar de '
+                  : 'Você tem uma conta a receber de '
+              }
+              ${new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(
+                account.value,
+              )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
+                timeZone: 'UTC',
+              }).format(new Date(account.dueDate))}`,
+              account._id.toString(),
+            )
 
-          await this.mailService.sendAccountDueNotification(
-            user.email,
-            `${
-              account.type === 'payable'
-                ? 'Lembre-se, você tem uma conta a pagar de '
-                : 'Você tem uma conta a receber de '
-            }
-            ${new Intl.NumberFormat('pt-BR', {
-              currency: 'BRL',
-            }).format(
-              account.value,
-            )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
-              timeZone: 'UTC',
-            }).format(new Date(account.dueDate))}`,
-          )
+            await this.mailService.sendAccountDueNotification(
+              user.email,
+              `${
+                account.type === 'payable'
+                  ? 'Lembre-se, você tem uma conta a pagar de '
+                  : 'Você tem uma conta a receber de '
+              }
+              ${new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(
+                account.value,
+              )} está vencendo em ${new Intl.DateTimeFormat('pt-BR', {
+                timeZone: 'UTC',
+              }).format(new Date(account.dueDate))}`,
+            )
+          }
         } catch (error) {
-          throw error
+          console.error(
+            'Error processing account:',
+            account._id,
+            error,
+          )
         }
       }
     } catch (error) {
-      throw error
+      console.error('Error in handleCron:', error)
     }
   }
 }

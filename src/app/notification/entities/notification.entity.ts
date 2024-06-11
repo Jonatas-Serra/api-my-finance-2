@@ -4,8 +4,14 @@ import { ApiProperty } from '@nestjs/swagger'
 
 export type NotificationDocument = Notification & Document
 
-@Schema()
+@Schema({
+  autoIndex: true,
+  toJSON: { virtuals: true },
+  versionKey: false,
+})
 export class Notification {
+  _id: string
+
   @ApiProperty({ example: 'userId123', description: 'User ID' })
   @Prop({ required: true })
   userId: string
@@ -43,15 +49,6 @@ export class Notification {
   })
   @Prop({ default: Date.now })
   createdAt: Date
-
-  constructor(notification?: Partial<Notification>) {
-    this.userId = notification?.userId
-    this.message = notification?.message
-    this.read = notification?.read
-    this.accountId = notification?.accountId
-    this.readAt = notification?.readAt
-    this.createdAt = notification?.createdAt
-  }
 }
 
 export const NotificationSchema =

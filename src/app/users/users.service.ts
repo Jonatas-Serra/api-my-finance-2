@@ -9,7 +9,6 @@ import AppError from 'src/shared/errors/AppError'
 import { WalletService } from '../finances/wallets/wallet.service'
 import { TransactionService } from '../finances/transactions/transactions.service'
 import { AccountsService } from '../finances/accounts/accounts.service'
-import { CategoriesUtil } from 'src/config/categories.util'
 
 @Injectable()
 export class UsersService {

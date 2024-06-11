@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
 import { AccountsService } from './accounts.service'
-import { Account } from './entities/account.entity'
+import { Account, AccountDocument } from './entities/account.entity'
 import { TransactionService } from '../transactions/transactions.service'
 import { Model, Types } from 'mongoose'
-import { UpdateAccountDto } from './dto/update-account.dto'
 import { CreateAccountDto } from './dto/create-account.dto'
+import { UpdateAccountDto } from './dto/update-account.dto'
 
 const mockAccount = {
   _id: new Types.ObjectId(),
@@ -16,19 +16,29 @@ const mockAccount = {
   payeeOrPayer: 'Test Payee',
   status: 'Pending',
   isPaid: false,
-  save: jest.fn(),
+  save: jest.fn().mockResolvedValue(this),
   remove: jest.fn(),
 }
 
-const mockAccountModel = () => ({
-  find: jest.fn().mockResolvedValue([mockAccount]),
-  findById: jest.fn().mockResolvedValue(mockAccount),
-  findByIdAndDelete: jest.fn().mockResolvedValue(mockAccount),
-  findByIdAndUpdate: jest.fn().mockResolvedValue(mockAccount),
-  create: jest.fn().mockReturnValue(mockAccount),
+const mockAccountModel = {
+  new: jest.fn().mockReturnValue(mockAccount),
+  constructor: jest.fn().mockReturnValue(mockAccount),
+  find: jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue([mockAccount]),
+  }),
+  findById: jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(mockAccount),
+  }),
+  findByIdAndDelete: jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(mockAccount),
+  }),
+  findByIdAndUpdate: jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(mockAccount),
+  }),
+  create: jest.fn().mockResolvedValue(mockAccount),
   save: jest.fn(),
   exec: jest.fn().mockResolvedValue(mockAccount),
-})
+}
 
 const mockTransactionService = {
   create: jest.fn(),
@@ -39,7 +49,7 @@ const mockTransactionService = {
 
 describe('AccountsService', () => {
   let service: AccountsService
-  let model: Model<Account>
+  let model: Model<AccountDocument>
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -47,7 +57,7 @@ describe('AccountsService', () => {
         AccountsService,
         {
           provide: getModelToken(Account.name),
-          useValue: mockAccountModel(),
+          useValue: mockAccountModel,
         },
         {
           provide: TransactionService,
@@ -57,7 +67,9 @@ describe('AccountsService', () => {
     }).compile()
 
     service = module.get<AccountsService>(AccountsService)
-    model = module.get<Model<Account>>(getModelToken(Account.name))
+    model = module.get<Model<AccountDocument>>(
+      getModelToken(Account.name),
+    )
   })
 
   it('should be defined', () => {
@@ -72,14 +84,14 @@ describe('AccountsService', () => {
         dueDate: new Date().toISOString(),
         issueDate: new Date().toISOString(),
         payeeOrPayer: 'Test Payee',
-        documentNumber: '01',
-        category: 'Service',
-        documentType: 'Boleto',
-        description: 'teste',
-        repeat: 0,
-        status: 'pending',
-        repeatInterval: 0,
-        createdBy: '',
+        category: 'Test Category',
+        documentNumber: '123456',
+        documentType: 'invoice',
+        description: 'Test Description',
+        createdBy: 'userId',
+        repeat: 1,
+        repeatInterval: 1,
+        status: 'Pending',
         walletId: 'walletId',
       }
       const result = await service.create(createAccountDto, 'userId')
@@ -96,7 +108,9 @@ describe('AccountsService', () => {
     })
 
     it('should throw an error if account not found', async () => {
-      jest.spyOn(model, 'findById').mockResolvedValueOnce(null)
+      jest.spyOn(model, 'findById').mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValueOnce(null),
+      } as any)
       await expect(
         service.findOne(new Types.ObjectId().toString()),
       ).rejects.toThrow('Account not found')
@@ -105,8 +119,20 @@ describe('AccountsService', () => {
 
   describe('update', () => {
     it('should update an account', async () => {
-      const updateAccountDto = {
+      const updateAccountDto: UpdateAccountDto = {
+        type: 'payable',
         value: 150,
+        dueDate: new Date().toISOString(),
+        issueDate: new Date().toISOString(),
+        payeeOrPayer: 'Test Payee',
+        category: 'Test Category',
+        documentNumber: '123456',
+        documentType: 'invoice',
+        description: 'Updated Description',
+        repeat: 1,
+        repeatInterval: 1,
+        walletId: 'walletId',
+        status: 'Pending',
       }
       const result = await service.update(
         mockAccount._id.toString(),
@@ -117,45 +143,54 @@ describe('AccountsService', () => {
     })
 
     it('should throw an error if account not found', async () => {
-      jest.spyOn(model, 'findById').mockResolvedValueOnce(null)
+      jest.spyOn(model, 'findById').mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValueOnce(null),
+      } as any)
+      const updateAccountDto: UpdateAccountDto = {
+        type: 'payable',
+        value: 150,
+        dueDate: new Date().toISOString(),
+        issueDate: new Date().toISOString(),
+        payeeOrPayer: 'Test Payee',
+        category: 'Test Category',
+        documentNumber: '123456',
+        documentType: 'invoice',
+        description: 'Updated Description',
+        repeat: 1,
+        repeatInterval: 1,
+        walletId: 'walletId',
+        status: 'Pending',
+      }
       await expect(
-        service.update(new Types.ObjectId().toString(), {
-          value: 150,
-          type: '',
-          walletId: '',
-          dueDate: '',
-          issueDate: '',
-          documentNumber: '',
-          category: '',
-          documentType: '',
-          description: '',
-          payeeOrPayer: '',
-          repeat: 0,
-          status: '',
-          repeatInterval: 0,
-        }),
+        service.update(
+          new Types.ObjectId().toString(),
+          updateAccountDto,
+        ),
       ).rejects.toThrow('Account not found')
     })
 
     it('should throw an error if account is already paid', async () => {
       const paidAccount = { ...mockAccount, status: 'Paid' }
-      jest.spyOn(model, 'findById').mockResolvedValueOnce(paidAccount)
+      jest.spyOn(model, 'findById').mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValueOnce(paidAccount),
+      } as any)
+      const updateAccountDto: UpdateAccountDto = {
+        type: 'payable',
+        value: 150,
+        dueDate: new Date().toISOString(),
+        issueDate: new Date().toISOString(),
+        payeeOrPayer: 'Test Payee',
+        category: 'Test Category',
+        documentNumber: '123456',
+        documentType: 'invoice',
+        description: 'Updated Description',
+        repeat: 1,
+        repeatInterval: 1,
+        walletId: 'walletId',
+        status: 'Pending',
+      }
       await expect(
-        service.update(paidAccount._id.toString(), {
-          value: 150,
-          type: '',
-          walletId: '',
-          dueDate: '',
-          issueDate: '',
-          documentNumber: '',
-          category: '',
-          documentType: '',
-          description: '',
-          payeeOrPayer: '',
-          repeat: 0,
-          status: '',
-          repeatInterval: 0,
-        }),
+        service.update(paidAccount._id.toString(), updateAccountDto),
       ).rejects.toThrow('Account already paid')
     })
   })
@@ -167,9 +202,9 @@ describe('AccountsService', () => {
     })
 
     it('should throw an error if account not found', async () => {
-      jest
-        .spyOn(model, 'findByIdAndDelete')
-        .mockResolvedValueOnce(null)
+      jest.spyOn(model, 'findByIdAndDelete').mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValueOnce(null),
+      } as any)
       await expect(
         service.remove(new Types.ObjectId().toString()),
       ).rejects.toThrow('Account not found')
@@ -193,7 +228,9 @@ describe('AccountsService', () => {
         status: 'Paid',
         isPaid: true,
       }
-      jest.spyOn(model, 'findById').mockResolvedValueOnce(paidAccount)
+      jest.spyOn(model, 'findById').mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValueOnce(paidAccount),
+      } as any)
       await expect(
         service.pay(
           paidAccount._id.toString(),
@@ -204,7 +241,9 @@ describe('AccountsService', () => {
     })
 
     it('should throw an error if account not found', async () => {
-      jest.spyOn(model, 'findById').mockResolvedValueOnce(null)
+      jest.spyOn(model, 'findById').mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValueOnce(null),
+      } as any)
       await expect(
         service.pay(
           new Types.ObjectId().toString(),

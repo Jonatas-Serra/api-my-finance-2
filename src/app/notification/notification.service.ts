@@ -85,4 +85,14 @@ export class NotificationsService {
       throw error
     }
   }
+
+  async remove(_id: string): Promise<Notification> {
+    try {
+      await this.notificationModel.deleteOne({ _id }).exec()
+    } catch (error) {
+      throw error
+    }
+
+    return null
+  }
 }
