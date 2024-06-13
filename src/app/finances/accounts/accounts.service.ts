@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { Model, Types } from 'mongoose'
+import { Model } from 'mongoose'
 import { TransactionService } from '../transactions/transactions.service'
 import { Account, AccountDocument } from './entities/account.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
