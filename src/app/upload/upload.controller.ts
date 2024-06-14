@@ -9,19 +9,19 @@ import {
   Delete,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
+import { UsersService } from '../users/users.service'
+import { AwsS3Service } from '../aws/aws-s3.service'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import {
   ApiBearerAuth,
   ApiConsumes,
   ApiOperation,
-  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
-import { UsersService } from '../users/users.service'
-import { AwsS3Service } from '../aws/aws-s3.service'
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { User } from '../users/entities/user.entity'
 
-@ApiTags('Upload')
+@ApiTags('upload')
 @Controller('upload')
 export class UploadController {
   constructor(
@@ -32,14 +32,15 @@ export class UploadController {
   @UseGuards(JwtAuthGuard)
   @Post('user/:id')
   @UseInterceptors(FileInterceptor('file'))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload user profile picture' })
   @ApiConsumes('multipart/form-data')
-  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({
     status: 200,
     description: 'Profile picture uploaded successfully.',
+    type: User,
   })
-  @ApiBearerAuth()
+  @ApiResponse({ status: 400, description: 'Bad Request' })
   async uploadUserProfilePicture(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
@@ -58,13 +59,14 @@ export class UploadController {
 
   @UseGuards(JwtAuthGuard)
   @Delete('user/:id/photo')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove user profile picture' })
-  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({
     status: 200,
     description: 'Profile picture removed successfully.',
+    type: User,
   })
-  @ApiBearerAuth()
+  @ApiResponse({ status: 404, description: 'User not found' })
   async removeUserProfilePicture(@Param('id') id: string) {
     return await this.usersService.removeProfilePicture(id)
   }

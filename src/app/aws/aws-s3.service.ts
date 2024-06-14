@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common'
 import { S3 } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
+import * as mime from 'mime-types'
 
 @Injectable()
 export class AwsS3Service {
@@ -34,12 +35,14 @@ export class AwsS3Service {
     }
 
     const fileName = `${uuidv4()}-${file.originalname}`
+    const contentType = mime.lookup(fileName)
 
     const params = {
       Bucket: bucketName,
       Key: fileName,
       Body: file.buffer,
       ACL: 'public-read',
+      ContentType: contentType || 'application/octet-stream',
     }
 
     const data = await this.s3.upload(params).promise()
