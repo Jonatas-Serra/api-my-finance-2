@@ -9,6 +9,7 @@ import AppError from 'src/shared/errors/AppError'
 import { WalletService } from '../finances/wallets/wallet.service'
 import { TransactionService } from '../finances/transactions/transactions.service'
 import { AccountsService } from '../finances/accounts/accounts.service'
+import { AwsS3Service } from '../aws/aws-s3.service'
 
 @Injectable()
 export class UsersService {
@@ -20,6 +21,7 @@ export class UsersService {
     private transactionService: TransactionService,
     @Inject(forwardRef(() => AccountsService))
     private accountsService: AccountsService,
+    private awsS3Service: AwsS3Service,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -87,7 +89,9 @@ export class UsersService {
     if (checkUser) {
       throw new AppError('Email already registered for another user')
     }
-    return this.userModel.findByIdAndUpdate(id, updateUserDto).exec()
+    return this.userModel
+      .findByIdAndUpdate(id, updateUserDto, { new: true })
+      .exec()
   }
 
   async deactivate(id: string) {
@@ -126,5 +130,46 @@ export class UsersService {
     await this.walletService.removeByUserId(id)
 
     return this.userModel.findByIdAndDelete(id).exec()
+  }
+
+  async updateProfilePicture(
+    id: string,
+    photoUrl: string,
+  ): Promise<User> {
+    const user = await this.userModel.findById(id).exec()
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    if (user.photo) {
+      const photoKey = user.photo.split('/').pop()
+      await this.awsS3Service.deleteFile(
+        process.env.AWS_S3_BUCKET_NAME,
+        photoKey,
+      )
+    }
+
+    user.photo = photoUrl
+    await user.save()
+    return user
+  }
+
+  async removeProfilePicture(id: string): Promise<User> {
+    const user = await this.userModel.findById(id).exec()
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    if (user.photo) {
+      const photoKey = user.photo.split('/').pop()
+      await this.awsS3Service.deleteFile(
+        process.env.AWS_S3_BUCKET_NAME,
+        photoKey,
+      )
+      user.photo = null
+      await user.save()
+    }
+
+    return user
   }
 }

@@ -6,6 +6,8 @@ import { AuthModule } from './auth/auth.module'
 import { WalletModule } from './finances/wallets/wallet.module'
 import { TransactionsModule } from './finances/transactions/transactions.module'
 import { NotificationModule } from './notification/notification.module'
+import { AwsModule } from './aws/aws.module'
+import { UploadModule } from './upload/upload.module'
 import { MailModule } from './mail/mail.module'
 import { TasksModule } from './task/task.module'
 import 'dotenv/config'
@@ -23,6 +25,8 @@ import 'dotenv/config'
     NotificationModule,
     MailModule,
     TasksModule,
+    AwsModule,
+    UploadModule,
   ],
   providers: [],
   controllers: [],

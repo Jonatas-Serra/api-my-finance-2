@@ -6,6 +6,7 @@ import { User, UserSchema } from './entities/user.entity'
 import { WalletModule } from '../finances/wallets/wallet.module'
 import { TransactionsModule } from '../finances/transactions/transactions.module'
 import { AccountsModule } from '../finances/accounts/accounts.module'
+import { AwsModule } from '../aws/aws.module'
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AccountsModule } from '../finances/accounts/accounts.module'
     forwardRef(() => WalletModule),
     forwardRef(() => TransactionsModule),
     forwardRef(() => AccountsModule),
+    AwsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
