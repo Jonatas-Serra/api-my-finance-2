@@ -24,6 +24,11 @@ import {
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 
+class ChangePasswordDto {
+  currentPassword: string
+  newPassword: string
+}
+
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -92,6 +97,32 @@ export class UsersController {
         excludeExtraneousValues: true,
       },
     )
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/change-password')
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID of the user to change password',
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The user password has been successfully changed.',
+  })
+  async changePassword(
+    @Param('id') id: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    const { currentPassword, newPassword } = changePasswordDto
+    await this.usersService.changePassword(
+      id,
+      currentPassword,
+      newPassword,
+    )
+    return { message: 'Password changed successfully' }
   }
 
   @ApiBearerAuth()

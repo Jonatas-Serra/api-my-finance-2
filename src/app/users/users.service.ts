@@ -30,6 +30,17 @@ export class UsersService {
     return hash
   }
 
+  async validatePassword(
+    userId: string,
+    currentPassword: string,
+  ): Promise<boolean> {
+    const user = await this.userModel.findById(userId).exec()
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+    return bcrypt.compare(currentPassword, user.password)
+  }
+
   async create(createUserDto: CreateUserDto) {
     const checkUser = await this.userModel.findOne({
       email: createUserDto.email,
@@ -114,6 +125,23 @@ export class UsersService {
     await this.userModel
       .findByIdAndUpdate(userId, { password: hashedPassword })
       .exec()
+  }
+
+  public async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const isPasswordValid = await this.validatePassword(
+      userId,
+      currentPassword,
+    )
+
+    if (!isPasswordValid) {
+      throw new AppError('Current password is incorrect', 400)
+    }
+
+    await this.updatePassword(userId, newPassword)
   }
 
   async remove(id: string) {
