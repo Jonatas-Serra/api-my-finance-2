@@ -31,7 +31,17 @@ async function bootstrap() {
       _next()
     },
   )
-  app.enableCors()
+
+  app.enableCors({
+    origin: [
+      'https://www.my-finance.site',
+      'https://api-myfinance-326ee4ab2f67.herokuapp.com',
+    ],
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: 'Content-Type,Authorization',
+    credentials: true,
+  })
+
   const PORT = process.env.PORT || 3000
   await app.listen(PORT, () =>
     console.log(`Server started on port ${PORT}`),
