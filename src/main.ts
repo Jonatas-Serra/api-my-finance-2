@@ -33,7 +33,12 @@ async function bootstrap() {
   )
 
   app.enableCors({
-    origin: ['*'],
+    origin: [
+      'https://www.my-finance.site',
+      'https://api-myfinance-326ee4ab2f67.herokuapp.com',
+      'http://localhost:5173',
+      'https://myfinance2.s3.amazonaws.com',
+    ],
     methods: 'GET,POST,PUT,PATCH,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
