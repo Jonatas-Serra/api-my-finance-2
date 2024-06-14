@@ -6,7 +6,7 @@ import { AppModule } from './app/app.module'
 import AppError from './shared/errors/AppError'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule, { cors: true })
   const config = new DocumentBuilder()
     .setTitle('API My Finance')
     .setDescription('Financial management')
@@ -31,18 +31,6 @@ async function bootstrap() {
       _next()
     },
   )
-
-  app.enableCors({
-    origin: [
-      'https://www.my-finance.site',
-      'https://api-myfinance-326ee4ab2f67.herokuapp.com',
-      'http://localhost:5173',
-      'https://myfinance2.s3.amazonaws.com',
-    ],
-    methods: 'GET,POST,PUT,PATCH,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
-    credentials: true,
-  })
 
   const PORT = process.env.PORT || 3000
   await app.listen(PORT, () =>
