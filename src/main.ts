@@ -38,7 +38,7 @@ async function bootstrap() {
       'https://api-myfinance-326ee4ab2f67.herokuapp.com',
       'http://localhost:5173',
     ],
-    methods: 'GET,POST,PUT,DELETE',
+    methods: 'GET,POST,PUT,PATCH,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
   })
