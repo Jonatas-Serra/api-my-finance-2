@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   Delete,
   Patch,
   UseGuards,
@@ -78,20 +79,16 @@ export class AccountsController {
     status: 200,
     description: 'The accounts have been successfully retrieved.',
   })
-  async findAll(@Param('creatorId') creatorId: string) {
-    const accounts = await this.accountsService.findAll(creatorId)
-    const uniqueAccounts: Record<string, AccountWithId> = {}
-
-    accounts.forEach((account: any) => {
-      const { _id, ...rest } = account._doc
-      uniqueAccounts[_id] = {
-        _id: _id.toString(),
-        ...rest,
-      } as AccountWithId
-    })
-
-    const simplifiedAccounts = Object.values(uniqueAccounts)
-    return simplifiedAccounts
+  async findAllByUserIdAndDateRange(
+    @Param('creatorId') userId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.accountsService.findAllByUserIdAndDateRange(
+      userId,
+      startDate,
+      endDate,
+    )
   }
 
   @UseGuards(JwtAuthGuard)

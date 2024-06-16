@@ -85,6 +85,27 @@ export class AccountsService {
     return account
   }
 
+  async findAllByUserIdAndDateRange(
+    userId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<Account[]> {
+    const filter: any = { createdBy: userId }
+
+    if (startDate && endDate) {
+      filter.dueDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      }
+    } else if (startDate) {
+      filter.dueDate = { $gte: new Date(startDate) }
+    } else if (endDate) {
+      filter.dueDate = { $lte: new Date(endDate) }
+    }
+
+    return this.accountModel.find(filter).exec()
+  }
+
   async findDueAccounts() {
     const currentDate = new Date()
     const accounts = await this.accountModel
