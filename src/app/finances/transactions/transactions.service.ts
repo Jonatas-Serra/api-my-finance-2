@@ -58,6 +58,28 @@ export class TransactionService {
     return this.transactionModel.find().exec()
   }
 
+  async findTransactions(
+    userId: string,
+    startDate: string,
+    endDate: string,
+    type: string,
+  ) {
+    const query: any = { createdBy: userId }
+
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      }
+    }
+
+    if (type) {
+      query.type = type
+    }
+
+    return this.transactionModel.find(query).exec()
+  }
+
   async findOne(id: string) {
     const transaction = await this.transactionModel
       .findById(id)

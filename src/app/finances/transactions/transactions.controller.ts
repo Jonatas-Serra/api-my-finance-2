@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   Delete,
   UseGuards,
   Patch,
@@ -11,6 +12,7 @@ import {
 import { TransactionService } from './transactions.service'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
+import { GetTransactionsDto } from './dto/get-transaction.dto'
 import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
 import {
   ApiTags,
@@ -52,8 +54,17 @@ export class TransactionsController {
     status: 200,
     description: 'Returns all transactions for the specified user.',
   })
-  findAll(@Param('creatorId') creatorId: string) {
-    return this.transactionsService.findAll(creatorId)
+  async getTransactions(
+    @Param('creatorId') userId: string,
+    @Query() query: GetTransactionsDto,
+  ) {
+    const { startDate, endDate, type } = query
+    return this.transactionsService.findTransactions(
+      userId,
+      startDate,
+      endDate,
+      type,
+    )
   }
 
   @UseGuards(JwtAuthGuard)
