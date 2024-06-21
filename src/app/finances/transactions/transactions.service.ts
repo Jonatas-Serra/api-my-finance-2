@@ -29,6 +29,7 @@ export class TransactionService {
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
+    createTransactionDto.date = new Date(createTransactionDto.date)
     const createdTransaction = new this.transactionModel(
       createTransactionDto,
     )
@@ -58,26 +59,30 @@ export class TransactionService {
     return this.transactionModel.find().exec()
   }
 
-  async findTransactions(
+  async findAllByUserIdAndDateRange(
     userId: string,
-    startDate: string,
-    endDate: string,
-    type: string,
-  ) {
-    const query: any = { createdBy: userId }
+    startDate?: string,
+    endDate?: string,
+    transactionType?: string[],
+  ): Promise<Transaction[]> {
+    const filter: any = { createdBy: userId }
 
     if (startDate && endDate) {
-      query.date = {
+      filter.date = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       }
+    } else if (startDate) {
+      filter.date = { $gte: new Date(startDate) }
+    } else if (endDate) {
+      filter.date = { $lte: new Date(endDate) }
     }
 
-    if (type) {
-      query.type = type
+    if (transactionType && transactionType.length > 0) {
+      filter.type = { $in: transactionType }
     }
 
-    return this.transactionModel.find(query).exec()
+    return this.transactionModel.find(filter).exec()
   }
 
   async findOne(id: string) {

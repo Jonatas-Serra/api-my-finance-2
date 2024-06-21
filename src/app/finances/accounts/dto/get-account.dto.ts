@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsDateString } from 'class-validator'
 
-export class GetTransactionsDto {
+export class GetAccountDto {
   @IsOptional()
   @IsDateString()
   startDate?: string
@@ -11,5 +11,5 @@ export class GetTransactionsDto {
 
   @IsOptional()
   @IsString()
-  transactionType?: string[]
+  status?: string[]
 }

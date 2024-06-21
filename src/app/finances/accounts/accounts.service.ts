@@ -21,14 +21,20 @@ export class AccountsService {
     createAccountDto: CreateAccountDto,
     createdBy: string,
   ) {
+    createAccountDto.dueDate = new Date(
+      createAccountDto.dueDate,
+    ).toISOString()
+    createAccountDto.issueDate = new Date(
+      createAccountDto.issueDate,
+    ).toISOString()
     createAccountDto.status = this.definedAccountStatus(
       parseISO(createAccountDto.dueDate),
     )
 
     const createdAccount = new this.accountModel({
       ...createAccountDto,
-      dueDate: parseISO(createAccountDto.dueDate),
-      issueDate: parseISO(createAccountDto.issueDate),
+      dueDate: new Date(createAccountDto.dueDate),
+      issueDate: new Date(createAccountDto.issueDate),
       createdBy,
     })
 
@@ -89,18 +95,52 @@ export class AccountsService {
     userId: string,
     startDate?: string,
     endDate?: string,
+    status?: string[],
   ): Promise<Account[]> {
     const filter: any = { createdBy: userId }
 
-    if (startDate && endDate) {
-      filter.dueDate = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      }
-    } else if (startDate) {
+    if (startDate) {
       filter.dueDate = { $gte: new Date(startDate) }
-    } else if (endDate) {
-      filter.dueDate = { $lte: new Date(endDate) }
+    }
+    if (endDate) {
+      if (!filter.dueDate) {
+        filter.dueDate = {}
+      }
+      filter.dueDate.$lte = new Date(endDate)
+    }
+
+    if (status && status.length > 0) {
+      filter.status = { $in: status }
+    }
+
+    return this.accountModel.find(filter).exec()
+  }
+
+  async findAllByUserIdAndDateRangeAndType(
+    userId: string,
+    startDate?: string,
+    endDate?: string,
+    status?: string[],
+    type?: string[],
+  ): Promise<Account[]> {
+    const filter: any = { createdBy: userId }
+
+    if (startDate) {
+      filter.dueDate = { $gte: new Date(startDate) }
+    }
+    if (endDate) {
+      if (!filter.dueDate) {
+        filter.dueDate = {}
+      }
+      filter.dueDate.$lte = new Date(endDate)
+    }
+
+    if (status && status.length > 0) {
+      filter.status = { $in: status }
+    }
+
+    if (type && type.length > 0) {
+      filter.type = { $in: type }
     }
 
     return this.accountModel.find(filter).exec()

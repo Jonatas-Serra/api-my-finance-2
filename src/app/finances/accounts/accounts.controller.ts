@@ -20,12 +20,9 @@ import {
 import { AccountsService } from './accounts.service'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
+import { GetAccountDto } from './dto/get-account.dto'
 import { Account } from './entities/account.entity'
 import { JwtAuthGuard } from 'src/app/auth/guards/jwt-auth.guard'
-
-interface AccountWithId extends Account {
-  _id: string
-}
 
 @ApiTags('accounts')
 @ApiBearerAuth()
@@ -81,13 +78,14 @@ export class AccountsController {
   })
   async findAllByUserIdAndDateRange(
     @Param('creatorId') userId: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query() query: GetAccountDto,
   ) {
+    const { startDate, endDate, status } = query
     return this.accountsService.findAllByUserIdAndDateRange(
       userId,
       startDate,
       endDate,
+      status,
     )
   }
 

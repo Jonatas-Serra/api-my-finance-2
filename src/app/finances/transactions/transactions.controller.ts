@@ -54,16 +54,16 @@ export class TransactionsController {
     status: 200,
     description: 'Returns all transactions for the specified user.',
   })
-  async getTransactions(
+  async findAllByUserIdAndDateRange(
     @Param('creatorId') userId: string,
     @Query() query: GetTransactionsDto,
   ) {
-    const { startDate, endDate, type } = query
-    return this.transactionsService.findTransactions(
+    const { startDate, endDate, transactionType } = query
+    return this.transactionsService.findAllByUserIdAndDateRange(
       userId,
       startDate,
       endDate,
-      type,
+      transactionType,
     )
   }
 
