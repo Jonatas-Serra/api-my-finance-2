@@ -120,7 +120,6 @@ export class AccountsService {
     userId: string,
     startDate?: string,
     endDate?: string,
-    status?: string[],
     type?: string[],
   ): Promise<Account[]> {
     const filter: any = { createdBy: userId }
@@ -133,10 +132,6 @@ export class AccountsService {
         filter.dueDate = {}
       }
       filter.dueDate.$lte = new Date(endDate)
-    }
-
-    if (status && status.length > 0) {
-      filter.status = { $in: status }
     }
 
     if (type && type.length > 0) {
