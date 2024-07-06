@@ -6,6 +6,7 @@ import {
 import { S3 } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import * as mime from 'mime-types'
+import { Express } from 'express'
 
 @Injectable()
 export class AwsS3Service {

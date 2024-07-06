@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 import { User } from '../users/entities/user.entity'
+import { Express } from 'express'
 
 @ApiTags('upload')
 @Controller('upload')
