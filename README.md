@@ -4,10 +4,9 @@
 
 # My Finance API
 
-![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white) ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+
 
 My Finance API é uma aplicação de gerenciamento financeiro desenvolvida com NestJS. Ela permite gerenciar transações financeiras, categorias e usuários.
 
@@ -45,9 +44,20 @@ My Finance API é uma aplicação de gerenciamento financeiro desenvolvida com N
     npm run start
     ```
 
+## Uso com Docker
+
+1. Certifique-se de ter o Docker instalado em sua máquina.
+
+2. Construa e inicie os containers com o Docker Compose:
+    ```bash
+    docker-compose up -d
+    ```
+
+3. A aplicação estará disponível em `http://localhost:3000`.
+
 ## Uso
 
-Após iniciar a aplicação, a API estará disponível em `http://localhost:4000`. Use um cliente REST como Postman para interagir com os endpoints.
+Após iniciar a aplicação, a API estará disponível em `http://localhost:3000`. Use um cliente REST como Postman para interagir com os endpoints.
 
 ## Documentação
 
