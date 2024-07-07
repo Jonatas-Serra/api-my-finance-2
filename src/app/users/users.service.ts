@@ -152,9 +152,7 @@ export class UsersService {
     }
 
     await this.accountsService.removeByUserId(id)
-
     await this.transactionService.removeByUserId(id)
-
     await this.walletService.removeByUserId(id)
 
     return this.userModel.findByIdAndDelete(id).exec()
