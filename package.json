@@ -2,7 +2,7 @@
   "name": "api-my-finance-2",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Jonatas Serra",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -48,7 +48,7 @@
     "nodemailer-mailgun-transport": "2.1.5",
     "passport-jwt": "4.0.1",
     "passport-local": "1.0.0",
-    "reflect-metadata": "0.2.2",
+    "reflect-metadata": "0.1.13",
     "rxjs": "7.8.1",
     "swagger-ui-express": "5.0.0",
     "uuid": "10.0.0"
@@ -111,5 +111,9 @@
   },
   "resolutions": {
     "@types/express": "4.17.21"
+  },
+  "engines": {
+    "node": "20.12.2",
+    "npm": "10.7.0"
   }
 }
