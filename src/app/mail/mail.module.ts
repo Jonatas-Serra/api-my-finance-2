@@ -1,7 +1,6 @@
 import { MailerModule } from '@nestjs-modules/mailer'
 import { forwardRef, Module } from '@nestjs/common'
 import { MailService } from './mail.service'
-import * as mailgunTransport from 'nodemailer-mailgun-transport'
 import { join } from 'path'
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter'
 import { UsersModule } from '../users/users.module'
@@ -10,12 +9,15 @@ import { UsersModule } from '../users/users.module'
   imports: [
     MailerModule.forRootAsync({
       useFactory: () => ({
-        transport: mailgunTransport({
+        transport: {
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT, 10),
+          secure: false,
           auth: {
-            api_key: process.env.MAILGUN_SENDING_KEY,
-            domain: process.env.MAILGUN_DOMAIN,
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
           },
-        }),
+        },
         template: {
           dir: join(__dirname, 'emailtemp'),
           adapter: new HandlebarsAdapter(),
@@ -24,7 +26,7 @@ import { UsersModule } from '../users/users.module'
           },
         },
         defaults: {
-          from: process.env.MAILGUN_EMAIL,
+          from: `"No Reply" <${process.env.SMTP_USER}>`,
         },
       }),
     }),
