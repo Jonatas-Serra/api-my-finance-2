@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "heroku-prebuild": "npm install -g npm@latest",
+    "heroku-prebuild": "npm install -g npm@latest --force",
     "heroku-postbuild": "npm run build",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
